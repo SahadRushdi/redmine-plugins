@@ -9,4 +9,12 @@ Redmine::Plugin.register :status_report do
   menu :top_menu, :status_report, { controller: 'reports', action: 'index' }, 
        caption: 'Get Current Status', 
        after: :my_page # Position the link after 'My page'
+  
+  # Define the project module
+  project_module :status_report_module do
+    permission :view_recent_issues_widget, {}, :public => true
+  end
 end
+
+# Load hooks
+require_relative 'lib/status_report/hooks'

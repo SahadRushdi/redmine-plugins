@@ -1,0 +1,55 @@
+<div class="recent-issues-widget">
+  <% if @recent_issues.present? %>
+    <ul class="recent-issues-list">
+      <% @recent_issues.each do |issue| %>
+        <li class="issue-item">
+          <span class="issue-id">#<%= issue.id %></span>
+          <span class="issue-tracker"><%= issue.tracker.name %></span>:
+          <%= link_to_issue(issue, :truncate => 60) %>
+          <br/>
+          <small class="issue-updated">
+            <%= l(:label_updated_time, time_tag(issue.updated_on)).html_safe %>
+          </small>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="nodata"><%= l(:label_no_data) %></p>
+  <% end %>
+</div>
+
+<style>
+  .recent-issues-widget {
+    padding: 5px;
+  }
+  
+  .recent-issues-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .issue-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .issue-item:last-child {
+    border-bottom: none;
+  }
+  
+  .issue-id {
+    font-weight: bold;
+    color: #169;
+  }
+  
+  .issue-tracker {
+    font-size: 0.9em;
+    color: #666;
+  }
+  
+  .issue-updated {
+    color: #999;
+    font-size: 0.85em;
+  }
+</style>

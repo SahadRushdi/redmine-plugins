@@ -2,7 +2,8 @@
 
 class ReportsController < ApplicationController
   unloadable 
-  before_action :require_login 
+  before_action :require_login, :except => [:recent_issues_widget]
+  before_action :find_project, :only => [:recent_issues_widget]
 
   def index
     @active_projects = Project.where(status: 1).order(:identifier)
@@ -26,5 +27,24 @@ class ReportsController < ApplicationController
                   disposition: 'attachment'
       end
     end
+  end
+
+  def recent_issues_widget
+    # Get the 5 most recently updated issues for the current project
+    @recent_issues = @project.issues
+                             .visible
+                             .includes(:status, :tracker, :journals)
+                             .order('issues.updated_on DESC')
+                             .limit(5)
+    
+    render :partial => 'recent_issues_widget', :layout => false
+  end
+
+  private
+
+  def find_project
+    @project = Project.find(params[:project_id])
+  rescue ActiveRecord::RecordNotFound
+    render_404
   end
 end
