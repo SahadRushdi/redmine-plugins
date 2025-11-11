@@ -1,0 +1,13 @@
+<h2>Status Report Generator</h2>
+
+<p>
+  Click the button below to download the consolidated status report for all active projects.
+</p>
+
+<%= link_to 'Download PDF Report', 
+            url_for(controller: 'reports', action: 'index', format: 'pdf'), 
+            class: 'icon icon-pdf' %>
+
+<p style="margin-top: 20px;">
+  (The view can optionally display the project data from @active_projects here if needed.)
+</p>
