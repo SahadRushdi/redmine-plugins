@@ -1,0 +1,94 @@
+<%
+# Calculate unlogged time for the current work week
+today = Date.today
+
+# Find the Monday of the current week
+monday = today - (today.wday - 1) % 7
+monday = monday - 7 if today.wday == 0 # Adjust if today is Sunday
+
+# Friday is 4 days after Monday
+friday = monday + 4
+
+# Expected hours per day
+hours_per_day = 8
+
+# Calculate total expected hours (5 days * 8 hours)
+expected_hours = 5 * hours_per_day
+
+# Query total hours logged by current user for this week (Monday to Friday)
+logged_hours = TimeEntry.where(user_id: User.current.id)
+                        .where('spent_on >= ? AND spent_on <= ?', monday, friday)
+                        .sum(:hours)
+
+# Calculate unlogged hours
+unlogged_hours = expected_hours - logged_hours
+unlogged_hours = 0 if unlogged_hours < 0
+
+# Build hash of days with logged hours
+days_to_log = {}
+(monday..friday).each do |date|
+  day_logged = TimeEntry.where(user_id: User.current.id, spent_on: date).sum(:hours)
+  days_to_log[date] = day_logged
+end
+%>
+
+<h3><%= link_to l(:label_spent_time), time_entries_path(:user_id => 'me') %></h3>
+
+<div class="my-unlogged-time-widget">
+  <div class="unlogged-summary">
+    <% if unlogged_hours > 0 %>
+      <p style="color: #d9534f; font-weight: bold; font-size: 14px;">
+        ⚠️ You have <strong><%= unlogged_hours.round(2) %> hours</strong> of unlogged work time this week.
+      </p>
+    <% else %>
+      <p style="color: #5cb85c; font-weight: bold; font-size: 14px;">
+        ✓ You're all caught up! All expected hours are logged for this week.
+      </p>
+    <% end %>
+  </div>
+
+  <div class="time-summary" style="margin-top: 10px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">
+    <p><strong>Week Summary:</strong></p>
+    <p>
+      Expected: <strong><%= expected_hours %> hours</strong> | 
+      Logged: <strong><%= logged_hours.round(2) %> hours</strong>
+    </p>
+  </div>
+
+  <div class="daily-breakdown" style="margin-top: 15px;">
+    <p><strong>Daily Breakdown (Mon-Fri):</strong></p>
+    <ul style="list-style: none; padding-left: 0;">
+      <% days_to_log.each do |date, hours_logged| %>
+        <li style="padding: 5px 0; <%= hours_logged < 8 ? 'color: #d9534f;' : '' %>">
+          <strong><%= date.strftime('%A, %b %d') %>:</strong> 
+          <%= hours_logged.round(2) %> / 8 hours
+          
+          <% if hours_logged < 8 %>
+            <span style="color: #d9534f; font-weight: bold;">
+              (Missing <%= (8 - hours_logged).round(2) %> hours)
+            </span>
+            <%= link_to 'Log Time →', time_entries_path, style: 'color: #337ab7; margin-left: 10px;' %>
+          <% else %>
+            <span style="color: #5cb85c;">✓</span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="action-links" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+    <%= link_to '📝 Log Time Entries', time_entries_path, class: 'icon icon-time-entry', style: 'font-weight: bold;' if User.current.allowed_to?(:log_time, nil, :global => true) %>
+  </div>
+</div>
+
+<style>
+  .my-unlogged-time-widget {
+    font-size: 13px;
+  }
+  .my-unlogged-time-widget ul li {
+    border-bottom: 1px solid #eee;
+  }
+  .my-unlogged-time-widget ul li:last-child {
+    border-bottom: none;
+  }
+</style>

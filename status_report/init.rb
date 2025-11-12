@@ -16,5 +16,10 @@ Redmine::Plugin.register :status_report do
   end
 end
 
+# Include helper for My Page blocks
+Rails.application.config.to_prepare do
+  MyHelper.send(:include, StatusReportMyHelper)
+end
+
 # Load hooks
 require_relative 'lib/status_report/hooks'
