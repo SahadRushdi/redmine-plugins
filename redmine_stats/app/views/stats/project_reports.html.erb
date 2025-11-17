@@ -1,0 +1,216 @@
+<div class="contextual">
+  <%= link_to l(:label_stats_overview), project_stats_path(@project), class: 'icon icon-stats' %>
+  <%= link_to l(:label_user_reports), user_reports_project_stats_path(@project), class: 'icon icon-user' %>
+  <%= link_to l(:label_issue_reports), issue_reports_project_stats_path(@project), class: 'icon icon-issue' %>
+</div>
+
+<h2><%= l(:label_project_reports) %></h2>
+
+<div class="box">
+  <h3><%= l(:label_date_range) %></h3>
+  <%= form_tag project_reports_project_stats_path(@project), method: :get, id: 'date-range-form' do %>
+    <p>
+      <%= l(:label_from) %>: <%= date_field_tag 'from', @from, size: 10 %>
+      <%= l(:label_to) %>: <%= date_field_tag 'to', @to, size: 10 %>
+      <%= l(:label_interval) %>: 
+      <%= select_tag 'interval', 
+        options_for_select([
+          [l(:label_day), 'day'],
+          [l(:label_week), 'week'],
+          [l(:label_month), 'month']
+        ], @interval) %>
+      <%= submit_tag l(:button_apply), name: nil, class: 'button-small' %>
+    </p>
+  <% end %>
+</div>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+    <div class="box">
+      <h3><%= l(:label_issues_trend) %></h3>
+      <canvas id="issues-trend-chart" class="chart" data-chart='<%= @issues_trend_chart_data %>'></canvas>
+    </div>
+    
+    <div class="box">
+      <h3><%= l(:label_active_hours) %></h3>
+      <canvas id="active-hours-chart" class="chart" data-chart='<%= @active_hours_chart_data %>'></canvas>
+    </div>
+  </div>
+  
+  <div class="splitcontentright">
+    <div class="box">
+      <h3 class="contribution-header">
+        <%= l(:label_project_health) %> 
+        <a href="#" class="health-score-info" title="<%= l(:tooltip_health_score_info) %>">?</a>
+      </h3>
+      <div id="health-score-tooltip" class="health-score-tooltip">
+        <p><strong><%= l(:label_health_score_explanation) || "Calcul du score de santé" %></strong></p>
+        <p><%= l(:text_health_score_components) || "Le score de santé est une combinaison pondérée de trois composantes principales" %></p>
+        <ul>
+          <li><%= l(:text_resolution_rate) || "Taux de résolution" %> (35%)</li>
+          <li><%= l(:text_overdue_issues) || "Demandes en retard" %> (45%)</li>
+          <li><%= l(:text_resolution_time) || "Temps de résolution" %> (20%)</li>
+        </ul>
+        <div class="health-score-formula">
+          Score = (Taux de résolution × 0.35) + <br>
+          ((100 - Pénalité de retard) × 0.45) + <br>
+          (Facteur temps × 0.20)
+        </div>
+      </div>
+      
+      <% 
+        # Get detailed health score data
+        detailed_health = RedmineStats::Utils::StatsCalculator.calculate_project_health_score(@project, from: @from, to: @to, detailed: true)
+        health_score = detailed_health[:score]
+        
+        # Format health score components for display
+        components = [
+          {
+            name: l(:text_resolution_rate) || "Taux de résolution",
+            value: detailed_health[:components][:resolution_rate],
+            weight: 0.4,
+            weighted_value: detailed_health[:components][:resolution_rate] * 0.4,
+            color: '#4BC0C0',
+            description: l(:health_component_resolution_rate_desc) || "Pourcentage de demandes résolues dans la période"
+          },
+          {
+            name: l(:text_overdue_issues) || "Demandes en retard",
+            value: 100 - detailed_health[:components][:overdue_penalty],
+            weight: 0.3,
+            weighted_value: (100 - detailed_health[:components][:overdue_penalty]) * 0.3,
+            color: '#FFCE56',
+            description: l(:health_component_overdue_desc) || "Mesure la façon dont le projet gère les échéances"
+          },
+          {
+            name: l(:text_resolution_time) || "Temps de résolution",
+            value: detailed_health[:components][:time_factor],
+            weight: 0.3,
+            weighted_value: detailed_health[:components][:time_factor] * 0.3,
+            color: '#FF9F40',
+            description: l(:health_component_time_desc) || "Rapidité avec laquelle les demandes sont résolues"
+          }
+        ]
+        
+        # Sort components by weighted value (highest first)
+        components = components.sort_by { |c| -c[:weighted_value] }
+        
+        # Determine health grade
+        health_grade = case health_score
+          when 80..100 then 'Excellent'
+          when 60..79 then 'Bon'
+          when 40..59 then 'Moyen'
+          else 'À améliorer'
+        end
+        
+        # Set health grade color
+        health_grade_color = case health_score
+          when 80..100 then '#4BC0C0' # Green
+          when 60..79 then '#FFCE56' # Yellow
+          when 40..59 then '#FF9F40' # Orange
+          else '#FF6384' # Red
+        end
+      %>
+      
+      <div class="project-health-summary">
+        <div class="health-score-box" style="border-color: <%= health_grade_color %>">
+          <div class="health-score-value" style="color: <%= health_grade_color %>"><%= health_score %></div>
+          <div class="health-score-label"><%= l(:label_health_score) || "Score de santé" %></div>
+          <div class="health-grade" style="background-color: <%= health_grade_color %>"><%= health_grade %></div>
+        </div>
+        
+        <div class="health-components">
+          <table class="health-components-table">
+            <thead>
+              <tr>
+                <th><%= l(:label_component) || "Composante" %></th>
+                <th><%= l(:label_value) || "Valeur" %></th>
+                <th><%= l(:label_weight) || "Poids" %></th>
+                <th><%= l(:label_contribution) || "Contribution" %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% components.each do |component| %>
+                <tr>
+                  <td>
+                    <div class="component-name">
+                      <span class="color-dot" style="background-color: <%= component[:color] %>"></span>
+                      <%= component[:name] %>
+                    </div>
+                    <div class="component-desc"><%= component[:description] %></div>
+                  </td>
+                  <td class="numeric"><%= component[:value].round(1) %></td>
+                  <td class="numeric"><%= (component[:weight] * 100).to_i %>%</td>
+                  <td class="numeric">
+                    <strong><%= component[:weighted_value].round(1) %></strong>
+                    <div class="progress-bar">
+                      <div class="progress-bar-value" style="width: <%= component[:weighted_value] %>%; background-color: <%= component[:color] %>"></div>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+              <tr class="health-total">
+                <td><strong><%= l(:label_total_score) || "Score total" %></strong></td>
+                <td></td>
+                <td></td>
+                <td class="numeric"><strong><%= health_score %></strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="health-metrics">
+        <h4><%= l(:label_key_metrics) || "Métriques clés" %></h4>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value"><%= detailed_health[:metrics][:total_issues] %></div>
+            <div class="metric-label"><%= l(:label_total_issues) || "Total des demandes" %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= detailed_health[:metrics][:resolved_or_closed_issues] %></div>
+            <div class="metric-label"><%= l(:label_resolved_closed_issues) || "Demandes résolues/fermées" %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= detailed_health[:metrics][:overdue_issues] %></div>
+            <div class="metric-label"><%= l(:label_overdue_issues) || "Demandes en retard" %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value">
+              <% if detailed_health[:metrics][:avg_resolution_time] && detailed_health[:metrics][:avg_resolution_time] > 0 %>
+                <%= distance_of_time_in_words(0, detailed_health[:metrics][:avg_resolution_time]) %>
+              <% else %>
+                <%= l(:label_no_data) || "No data" %>
+              <% end %>
+            </div>
+            <div class="metric-label"><%= l(:label_avg_resolution_time) || "Temps moyen de résolution" %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= detailed_health[:components][:resolution_rate].round(1) %>%</div>
+            <div class="metric-label"><%= l(:label_resolution_rate) || "Taux de résolution" %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="box">
+      <h3><%= l(:label_active_days) %></h3>
+      <canvas id="active-days-chart" class="chart" data-chart='<%= @active_days_chart_data %>'></canvas>
+    </div>
+    
+    <% if @snapshots.any? %>
+      <div class="box">
+        <h3><%= l(:label_health_trend) %></h3>
+        <canvas id="health-trend-chart" class="chart" data-chart='<%= @health_trend_data %>'></canvas>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%= render partial: 'includes' %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    RedmineStats.initCharts();
+    RedmineStats.initGauge();
+  });
+</script> 

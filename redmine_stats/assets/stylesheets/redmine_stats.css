@@ -1,0 +1,448 @@
+/* General Stats Styling */
+.stats-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.stats-details {
+  flex: 1;
+  min-width: 200px;
+}
+
+.chart {
+  height: 300px;
+  margin: 15px 0;
+}
+
+.chart-container {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.chart-description {
+  margin: 5px 0 15px 0;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* Project Health Summary */
+.project-health-summary {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.health-score-box {
+  border: 3px solid #4BC0C0;
+  border-radius: 8px;
+  text-align: center;
+  padding: 15px;
+  width: 120px;
+  margin-right: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background-color: #fff;
+}
+
+.health-score-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: #4BC0C0;
+  line-height: 1.2;
+}
+
+.health-score-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.health-grade {
+  background-color: #4BC0C0;
+  color: white;
+  padding: 5px 0;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.health-components {
+  flex: 1;
+  min-width: 300px;
+}
+
+.health-components-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.health-components-table th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.health-components-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.health-components-table .numeric {
+  text-align: right;
+}
+
+.component-name {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.component-desc {
+  font-size: 11px;
+  color: #777;
+  margin-left: 17px;
+}
+
+.health-total {
+  border-top: 2px solid #ddd;
+}
+
+.health-metrics {
+  margin-top: 20px;
+}
+
+.health-metrics h4 {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.metric-box {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #36a2eb;
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Contributors Table */
+.contributors-table tr.top-contributor-1 {
+  background-color: rgba(75, 192, 192, 0.1);
+}
+
+.contributors-table tr.top-contributor-2 {
+  background-color: rgba(255, 206, 86, 0.1);
+}
+
+.contributors-table tr.top-contributor-3 {
+  background-color: rgba(255, 159, 64, 0.1);
+}
+
+.contributor-rank {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 18px;
+  color: white;
+  font-weight: bold;
+  font-size: 11px;
+  margin-right: 5px;
+}
+
+.rank-1 {
+  background-color: #4BC0C0;
+}
+
+.rank-2 {
+  background-color: #FFCE56;
+}
+
+.rank-3 {
+  background-color: #FF9F40;
+}
+
+/* Gauge Styling (Legacy) */
+.gauge-container {
+  width: 150px;
+  height: 100px;
+  margin: 10px 20px 10px 0;
+  position: relative;
+}
+
+.gauge {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-bottom-left-radius: 100px;
+  border-bottom-right-radius: 100px;
+  background-color: #f5f5f5;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.gauge-segment {
+  position: absolute;
+  height: 100%;
+  bottom: 0;
+  z-index: 1;
+}
+
+.gauge-needle {
+  width: 2px;
+  height: 75px;
+  background-color: #333;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform-origin: bottom center;
+  z-index: 3;
+  transform: rotate(90deg);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.gauge-value {
+  position: absolute;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  bottom: 10px;
+  z-index: 4;
+}
+
+.gauge-score-label {
+  font-size: 14px;
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+.gauge-legend {
+  margin: 15px 0;
+  font-size: 12px;
+  border: 1px solid #eee;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.gauge-legend-item {
+  display: inline-block;
+  margin-right: 15px;
+}
+
+.color-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.legend-label {
+  vertical-align: middle;
+}
+
+.health-score-info {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #628DB6;
+  color: white;
+  text-align: center;
+  line-height: 16px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-left: 5px;
+  cursor: help;
+}
+
+.health-score-tooltip {
+  display: none;
+  position: absolute;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-width: 300px;
+  font-size: 12px;
+  left: auto;
+  right: auto;
+}
+
+.health-score-formula {
+  font-family: monospace;
+  font-size: 12px;
+  background-color: #f0f0f0;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+/* Table enhancements */
+.list-stats {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.list-stats th {
+  background-color: #f1f1f1;
+  font-weight: bold;
+  text-align: left;
+  padding: 8px;
+}
+
+.list-stats td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.list-stats tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.data-table {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.data-table th {
+  background-color: #e3f2fd;
+  color: #333;
+  padding: 8px;
+  text-align: left;
+  font-weight: bold;
+}
+
+.data-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+
+.data-table tr:hover {
+  background-color: #e0e0e0;
+}
+
+/* Progress bars */
+.progress-bar {
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-value {
+  height: 100%;
+  background-color: #628DB6;
+}
+
+.progress-bar-green .progress-bar-value {
+  background-color: #4BC0C0;
+}
+
+.progress-bar-yellow .progress-bar-value {
+  background-color: #FFCE56;
+}
+
+.progress-bar-red .progress-bar-value {
+  background-color: #FF6384;
+}
+
+/* Filter and date range controls */
+.filter-controls {
+  margin-bottom: 15px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.stats-big-number {
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px 0;
+  color: #36a2eb;
+}
+
+.stats-description {
+  text-align: center;
+  font-style: italic;
+  color: #777;
+  margin-bottom: 15px;
+}
+
+.export-button {
+  float: right;
+  margin-top: -5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gauge-container {
+    margin: 0 auto 20px auto;
+  }
+  
+  .stats-info {
+    flex-direction: column;
+  }
+  
+  .stats-details {
+    width: 100%;
+  }
+  
+  .chart {
+    height: 250px;
+  }
+  
+  .project-health-summary {
+    flex-direction: column;
+  }
+  
+  .health-score-box {
+    margin-bottom: 15px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Contribution Header */
+.contribution-header {
+  background-color: #e3f2fd;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 0;
+} 

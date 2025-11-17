@@ -1,0 +1,332 @@
+<div class="contextual">
+  <%= link_to l(:label_stats_overview), project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-stats' %>
+  <%= link_to l(:label_project_reports), project_reports_project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-projects' %>
+  <%= link_to l(:label_issue_reports), issue_reports_project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-issue' %>
+</div>
+
+<h2><%= l(:label_user_reports) %></h2>
+
+<div class="box filter-controls">
+  <h3><%= l(:label_date_range) %></h3>
+  <%= form_tag user_reports_project_stats_path(@project), method: :get, id: 'date-range-form' do %>
+    <p>
+      <%= hidden_field_tag 'user_id', params[:user_id] if params[:user_id].present? %>
+      <%= l(:label_from) %>: <%= date_field_tag 'from', @from, size: 10 %>
+      <%= l(:label_to) %>: <%= date_field_tag 'to', @to, size: 10 %>
+      <%= hidden_field_tag 'include_subprojects', @include_subprojects %>
+      <%= hidden_field_tag 'include_parent_issues', @include_parent_issues %>
+      <%= submit_tag l(:button_apply), name: nil, class: 'button-small' %>
+    </p>
+  <% end %>
+</div>
+
+<% if @user %>
+  <h3><%= l(:label_user) %>: <%= @user.name %></h3>
+  
+  <% 
+    # Use the detailed contribution data from controller
+    components = @contribution_details[:components]
+    total_score = @contribution_details[:total].to_f
+    
+    # Extract values for template
+    admin_value = components[:administrative][:value].to_f
+    tech_value = components[:technical][:value].to_f
+  %>
+  
+  <div class="splitcontent">
+    <div class="splitcontentleft">
+      <div class="box">
+        <h3 class="contribution-header">
+          <%= l(:label_user_contribution) || "Contribution de l'utilisateur" %>
+          <a href="#" class="health-score-info" title="<%= l(:tooltip_contribution_score_info) %>">?</a>
+        </h3>
+        <div id="contribution-score-tooltip" class="health-score-tooltip">
+          <p><strong><%= l(:label_contribution_score_formula) || "Formule de calcul du score de contribution" %></strong></p>
+          <div class="health-score-formula">
+            Score = (Issues Created × 1.0) +<br>
+            (Issues Updated × 1.0) +<br>
+            (Issues Closed × 1.0) +<br>
+            (Comments × 1.0) +<br>
+            (Status Updates × 1.0) +<br>
+            (On-time Resolutions × 3.0) +<br>
+            (Not-On-time Resolutions × 1.0)
+          </div>
+        </div>
+        
+        <p class="chart-description"><%= l(:text_contribution_calculation) || "Ce score reflète la contribution globale de l'utilisateur au projet." %></p>
+        
+        <div class="user-score-summary">
+          <div class="contribution-score-box">
+            <div class="contribution-score-value"><%= @contribution_score.round(1) %></div>
+            <div class="contribution-score-label"><%= l(:label_contribution_score) || "Score de contribution" %></div>
+          </div>
+          
+          <div class="contribution-components">
+            <table class="contribution-components-table">
+              <thead>
+                <tr>
+                  <th><%= l(:label_activity) || "Activité" %></th>
+                  <th><%= l(:label_count) || "Nombre" %></th>
+                  <th><%= l(:label_weight) || "Poids" %></th>
+                  <th><%= l(:label_contribution) || "Contribution" %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Administrative tasks -->
+                <tr>
+                  <td>
+                    <div class="component-name">
+                      <span class="color-dot" style="background-color: #36A2EB"></span>
+                      <%= l(:label_administrative_tasks) || "Charge administratif" %>
+                    </div>
+                    <div class="component-desc">
+                      <%= "#{l(:label_issues_created) || 'Tickets créés'}: #{components[:administrative][:breakdown][:created] || 0}" %>,
+                      <%= "#{l(:label_issues_updated) || 'Tickets modifiés'}: #{components[:administrative][:breakdown][:updated] || 0}" %>,
+                      <%= "#{l(:label_issues_closed) || 'Tickets fermés'}: #{components[:administrative][:breakdown][:closed] || 0}" %>,
+                      <%= "#{l(:label_comments) || 'Commentaires'}: #{components[:administrative][:breakdown][:comments] || 0}" %>,
+                      <%= "#{l(:label_status_updates) || 'Mises à jour de statut'}: #{components[:administrative][:breakdown][:status_updates] || 0}" %>
+                    </div>
+                  </td>
+                  <td class="numeric"><%= components[:administrative][:count] || 0 %></td>
+                  <td class="numeric">× <%= components[:administrative][:weight] || 1 %></td>
+                  <td class="numeric">
+                    <strong><%= admin_value.round(1) %></strong>
+                    <div class="progress-bar">
+                      <div class="progress-bar-value" style="width: <%= total_score > 0 ? [admin_value / total_score * 100, 100].min : 0 %>%; background-color: #36A2EB"></div>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Technical tasks -->
+                <tr>
+                  <td>
+                    <div class="component-name">
+                      <span class="color-dot" style="background-color: #FF9F40"></span>
+                      <%= l(:label_technical_tasks) || "Charge technique" %>
+                    </div>
+                    <div class="component-desc">
+                      <%= "#{l(:label_on_time_resolutions) || 'Résolutions à temps'}: #{components[:technical][:breakdown][:on_time][:count] || 0} × #{components[:technical][:breakdown][:on_time][:weight] || 0}" %>,
+                      <%= "#{l(:label_not_on_time_resolutions) || 'Résolutions en retard'}: #{components[:technical][:breakdown][:not_on_time][:count] || 0} × #{components[:technical][:breakdown][:not_on_time][:weight] || 0}" %>
+                    </div>
+                  </td>
+                  <td class="numeric"><%= components[:technical][:count] || 0 %></td>
+                  <td class="numeric"><%= components[:technical][:weight] || 1 %></td>
+                  <td class="numeric">
+                    <strong><%= tech_value.round(1) %></strong>
+                    <div class="progress-bar">
+                      <div class="progress-bar-value" style="width: <%= total_score > 0 ? [tech_value / total_score * 100, 100].min : 0 %>%; background-color: #FF9F40"></div>
+                    </div>
+                  </td>
+                </tr>
+                
+                <tr class="contribution-total">
+                  <td><strong><%= l(:label_total_score) || "Score total" %></strong></td>
+                  <td></td>
+                  <td></td>
+                  <td class="numeric"><strong><%= total_score.round(1) %></strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="box">
+        <h3><%= l(:label_user_contribution) || "Contribution de l'utilisateur" %></h3>
+        <p class="chart-description"><%= l(:text_radar_chart_explanation) || "Ce graphique montre la contribution sur différents types d'activités." %></p>
+        <div class="chart-container">
+          <canvas id="contribution-chart" class="chart" data-chart='<%= @contribution_chart_data %>'></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="splitcontentright">
+      <div class="box">
+        <h3><%= l(:label_productivity_trend) || "Tendance de productivité" %></h3>
+        <p class="chart-description"><%= l(:text_productivity_trend_description) || "Ce graphique montre l'évolution du score de contribution au fil du temps." %></p>
+        <div class="chart-container">
+          <canvas id="productivity-chart" class="chart" data-chart='<%= @productivity_chart_data %>'></canvas>
+        </div>
+      </div>
+      
+      <div class="box">
+        <h3><%= l(:label_select_another_user) || "Sélectionner un autre utilisateur" %></h3>
+        <%= form_tag user_reports_project_stats_path(@project), method: :get, id: 'user-select-form' do %>
+          <p>
+            <%= select_tag 'user_id', 
+              options_from_collection_for_select(@users, :id, :name, @user.id),
+              :prompt => l(:label_select_user) || "Sélectionner un utilisateur",
+              :onchange => "this.form.submit();" %>
+            <%= hidden_field_tag 'from', @from %>
+            <%= hidden_field_tag 'to', @to %>
+            <%= hidden_field_tag 'include_subprojects', @include_subprojects %>
+            <%= hidden_field_tag 'include_parent_issues', @include_parent_issues %>
+          </p>
+        <% end %>
+        
+        <p>
+          <%= link_to l(:label_all_users_comparison) || "Comparaison de tous les utilisateurs", user_reports_project_stats_path(@project, from: @from, to: @to, include_subprojects: @include_subprojects, include_parent_issues: @include_parent_issues), class: 'icon icon-user-group' %>
+        </p>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="box">
+    <h3><%= l(:label_user_comparison) || "Comparaison des utilisateurs" %></h3>
+    <p class="chart-description"><%= l(:text_user_comparison_description) || "Ce graphique compare les scores de contribution entre les différents utilisateurs du projet." %></p>
+    <div class="chart-container">
+      <canvas id="users-comparison-chart" class="chart" data-chart='<%= @users_comparison_chart_data %>'></canvas>
+    </div>
+  </div>
+  
+  <div class="box">
+    <h3><%= l(:label_user_statistics) || "Statistiques des utilisateurs" %></h3>
+    <p class="chart-description"><%= l(:text_user_statistics_description) || "Ce tableau présente les statistiques détaillées par utilisateur." %></p>
+    <% if @user_stats.any? %>
+      <table class="list data-table contributors-table">
+        <thead>
+          <tr>
+            <th><%= l(:label_user) || "Utilisateur" %></th>
+            <th><%= l(:label_administrative_tasks) || "Charge administratif" %></th>
+            <th><%= l(:label_technical_tasks) || "Charge technique" %></th>
+            <th><%= l(:label_contribution_score) || "Score de contribution" %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @user_stats.each_with_index do |stats, index| %>
+            <tr class="<%= index < 3 ? 'top-contributor-' + (index + 1).to_s : '' %>">
+              <td>
+                <% if index < 3 %>
+                  <span class="contributor-rank rank-<%= index + 1 %>"><%= index + 1 %></span>
+                <% end %>
+                <%= link_to stats[:user].name, user_reports_project_stats_path(@project, :user_id => stats[:user].id, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues) %>
+              </td>
+              <td>
+                <% 
+                  begin
+                    user_details = stats[:user].contribution_details(@project, from: @from, to: @to, include_subprojects: @include_subprojects, include_parent_issues: @include_parent_issues)
+                    user_details ||= { components: { administrative: { value: 0 } } }
+                    admin_score = user_details[:components][:administrative][:value].to_f.round(1)
+                  rescue => e
+                    Rails.logger.error "Error getting admin score: #{e.message}"
+                    admin_score = 0
+                  end
+                %>
+                <%= admin_score %>
+              </td>
+              <td>
+                <% 
+                  begin
+                    tech_score = user_details[:components][:technical].present? ? user_details[:components][:technical][:value].to_f.round(1) : 0
+                  rescue => e
+                    Rails.logger.error "Error getting tech score: #{e.message}"
+                    tech_score = 0
+                  end
+                %>
+                <%= tech_score %>
+              </td>
+              <td>
+                <strong><%= stats[:contribution_score] || 0 %></strong>
+                <div class="progress-bar">
+                  <% max_score = @user_stats.map { |s| s[:contribution_score] || 0 }.max %>
+                  <% percentage = max_score > 0 ? ((stats[:contribution_score] || 0).to_f / max_score * 100) : 0 %>
+                  <div class="progress-bar-value" style="width: <%= percentage %>%"></div>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="nodata"><%= l(:label_no_data) %></p>
+    <% end %>
+  </div>
+<% end %>
+
+<%= render partial: 'includes' %>
+
+<style>
+  .total-score {
+    border-top: 2px solid #ddd;
+    font-weight: bold;
+  }
+  
+  .user-score-summary {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  
+  .contribution-score-box {
+    border: 3px solid #36a2eb;
+    border-radius: 8px;
+    text-align: center;
+    padding: 15px;
+    width: 120px;
+    margin-right: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  .contribution-score-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: #36a2eb;
+    line-height: 1.2;
+  }
+  
+  .contribution-score-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+  
+  .contribution-components {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .contribution-components-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .contribution-components-table th {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 2px solid #ddd;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .contribution-components-table td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .contribution-components-table .numeric {
+    text-align: right;
+  }
+  
+  .contribution-total {
+    border-top: 2px solid #ddd;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    RedmineStats.initCharts();
+    RedmineStats.initGauge();
+    
+    // Add tooltip toggle for contribution score formula
+    var formulaInfo = document.querySelector('a[title="<%= l(:tooltip_contribution_score_info) %>"]');
+    if (formulaInfo) {
+      formulaInfo.addEventListener('click', function(e) {
+        e.preventDefault();
+        var tooltip = document.getElementById('contribution-score-tooltip');
+        if (tooltip) {
+          tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+        }
+      });
+    }
+  });
+</script> 

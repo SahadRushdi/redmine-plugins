@@ -1,0 +1,97 @@
+<div class="contextual">
+  <%= link_to l(:label_stats_overview), project_stats_path(@project), class: 'icon icon-stats' %>
+  <%= link_to l(:label_user_reports), user_reports_project_stats_path(@project), class: 'icon icon-user' %>
+  <%= link_to l(:label_project_reports), project_reports_project_stats_path(@project), class: 'icon icon-projects' %>
+</div>
+
+<h2><%= l(:label_issue_reports) %></h2>
+
+<div class="box">
+  <h3><%= l(:label_date_range) %></h3>
+  <%= form_tag issue_reports_project_stats_path(@project), method: :get, id: 'date-range-form' do %>
+    <p>
+      <%= l(:label_from) %>: <%= date_field_tag 'from', @from, size: 10 %>
+      <%= l(:label_to) %>: <%= date_field_tag 'to', @to, size: 10 %>
+      <%= submit_tag l(:button_apply), name: nil, class: 'button-small' %>
+    </p>
+  <% end %>
+</div>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+    <div class="box">
+      <h3><%= l(:label_resolution_time_distribution) %></h3>
+      <canvas id="resolution-chart" class="chart" data-chart='<%= @resolution_chart_data %>'></canvas>
+    </div>
+  </div>
+  
+  <div class="splitcontentright">
+    <div class="box">
+      <h3><%= l(:label_avg_resolution_time) %></h3>
+      <div class="stats-big-number">
+        <% if @avg_resolution_time.to_i > 0 %>
+          <%= distance_of_time_in_words(0, @avg_resolution_time) %>
+        <% else %>
+          0
+        <% end %>
+      </div>
+      <p class="stats-description"><%= l(:text_avg_resolution_time_description) %></p>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <h3><%= l(:label_longest_resolution_time) %></h3>
+  <% if @longest_issues.any? %>
+    <table class="list">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th><%= l(:field_subject) %></th>
+          <th><%= l(:field_status) %></th>
+          <th><%= l(:field_priority) %></th>
+          <th><%= l(:field_created_on) %></th>
+          <th><%= l(:label_resolution_time) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @longest_issues.each do |issue| %>
+          <tr>
+            <td><%= link_to issue.id, issue_path(issue) %></td>
+            <td><%= link_to issue.subject, issue_path(issue) %></td>
+            <td><%= issue.status.name if issue.status %></td>
+            <td><%= issue.priority.name if issue.priority %></td>
+            <td><%= format_date(issue.created_on) %></td>
+            <td><strong><%= distance_of_time_in_words(0, issue.resolution_time) if issue.resolution_time %></strong></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="nodata"><%= l(:label_no_data) %></p>
+  <% end %>
+</div>
+
+<%= render partial: 'includes' %>
+
+<style>
+  .stats-big-number {
+    font-size: 36px;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px 0;
+    color: #36a2eb;
+  }
+  
+  .stats-description {
+    text-align: center;
+    font-style: italic;
+    color: #777;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    RedmineStats.initCharts();
+  });
+</script> 

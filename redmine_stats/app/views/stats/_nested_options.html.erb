@@ -1,0 +1,115 @@
+<div class="box nested-options-box">
+  <h3><%= l(:label_nested_options) || "Nested Calculation Options" %></h3>
+  <div class="nested-options-intro">
+    <p class="nested-options-explanation"><%= l(:text_nested_options_explanation) || "These options control how deeply the statistics include data across your project hierarchy." %></p>
+  </div>
+  <div class="nested-options-form">
+    <%= form_tag(url_for(params.permit!), method: :get, id: 'nested-options-form') do %>
+      <div class="nested-options-controls">
+        <div class="option-container">
+          <label class="inline-checkbox">
+            <%= check_box_tag 'include_subprojects', '1', @include_subprojects %>
+            <span class="option-label"><%= l(:label_include_subprojects) || "Include subprojects" %></span>
+          </label>
+          <div class="option-description">
+            <%= l(:tooltip_include_subprojects) || "Include issues from child projects in statistics calculations" %>
+          </div>
+        </div>
+        
+        <div class="option-container">
+          <label class="inline-checkbox">
+            <%= check_box_tag 'include_parent_issues', '1', @include_parent_issues %>
+            <span class="option-label"><%= l(:label_include_parent_issues) || "Include parent/child issues" %></span>
+          </label>
+          <div class="option-description">
+            <%= l(:tooltip_include_parent_issues) || "Include parent issues and their children in statistics calculations" %>
+          </div>
+        </div>
+        
+        <% params.permit!.each do |key, value| %>
+          <% unless ['include_subprojects', 'include_parent_issues'].include?(key) %>
+            <%= hidden_field_tag key, value %>
+          <% end %>
+        <% end %>
+        
+        <%= submit_tag l(:button_apply), name: nil, class: 'button-primary' %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+  .nested-options-box {
+    margin-bottom: 20px;
+    border-left: 4px solid #4b9fd5;
+  }
+  
+  .nested-options-intro {
+    margin-bottom: 10px;
+  }
+  
+  .nested-options-explanation {
+    color: #666;
+    font-style: italic;
+  }
+  
+  .nested-options-form {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+  }
+  
+  .nested-options-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .option-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .inline-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .option-label {
+    font-weight: bold;
+  }
+  
+  .option-description {
+    color: #666;
+    font-size: 0.9em;
+    margin-left: 25px;
+  }
+  
+  .button-primary {
+    margin-top: 10px;
+    background-color: #4b9fd5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button-primary:hover {
+    background-color: #3c87b9;
+  }
+  
+  @media (min-width: 768px) {
+    .nested-options-controls {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    
+    .option-container {
+      flex: 1;
+    }
+  }
+</style> 

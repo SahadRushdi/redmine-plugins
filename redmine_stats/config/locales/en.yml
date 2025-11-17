@@ -1,0 +1,168 @@
+en:
+  # Plugin name and menu items
+  label_stats: Statistics
+  label_stats_overview: Overview
+  label_user_reports: User Reports
+  label_project_reports: Project Reports
+  label_issue_reports: Issue Reports
+  label_stats_settings: Stats Settings
+  label_quick_stats: Quick Stats
+  label_stats_global_overview: Global Statistics Overview
+  
+  # Project health and general metrics
+  label_project_health: Project Health
+  label_health_score: Health Score
+  label_health_score_explanation: Health Score Calculation
+  tooltip_health_score_info: Click for information about how the Health Score is calculated
+  text_health_score_components: The health score is a weighted combination of three main components
+  text_resolution_rate: Resolution Rate
+  text_overdue_issues: Overdue Issues
+  text_resolution_time: Resolution Time
+  text_overdue_penalty: Overdue Penalty
+  health_component_resolution_rate_desc: Percentage of issues resolved in the period
+  health_component_overdue_desc: Measures how well the project manages deadlines
+  health_component_time_desc: How quickly issues are being resolved
+  label_total_issues: Total Issues
+  label_open_issues: Open Issues
+  label_closed_issues: Closed Issues
+  label_resolved_issues: Resolved Issues
+  label_resolved_closed_issues: Resolved/Closed Issues
+  label_completion_rate: Completion Rate
+  label_resolution_rate: Resolution Rate
+  label_issues_trend: Issues Trend
+  label_view_stats: View Statistics
+  label_issues_summary: Issues Summary
+  label_projects_with_stats_module: Projects with Stats Module Enabled
+  label_component: Component
+  label_value: Value
+  label_weight: Weight
+  label_contribution: Contribution
+  label_total_score: Total Score
+  label_key_metrics: Key Metrics
+  label_overdue_issues: Overdue Issues
+  
+  # Chart descriptions
+  text_issues_trend_description: Number of issues created over the selected time period
+  text_issues_by_status_description: Distribution of issues by their current status
+  text_issues_by_priority_description: Distribution of issues by their priority level
+  text_issues_by_tracker_description: Distribution of issues by tracker type
+  text_top_contributors_description: Team members with the highest contribution scores based on created, updated and closed issues
+  text_radar_chart_explanation: This radar chart visualizes the user's contribution in different areas relative to maximum values
+  text_productivity_trend_description: How the user's contribution score has changed over time
+  text_user_comparison_description: Comparison of contribution scores across all users in the project
+  text_user_statistics_description: Detailed statistics for all users in the project during the selected period
+  
+  # User-related labels
+  label_user: User
+  label_created: Created
+  label_updated: Updated
+  label_closed: Closed
+  label_score: Score
+  label_top_contributors: Top Contributors
+  label_user_contribution: User Contribution
+  label_contribution_score: Contribution Score
+  label_contribution_score_formula: Contribution Score Formula
+  tooltip_contribution_score_info: Click for information about how Contribution Scores are calculated
+  text_contribution_calculation: Each user's contribution is measured by a weighted score of their activities
+  label_avg_resolution_time: Avg. Resolution Time
+  label_productivity_trend: Productivity Trend
+  label_select_another_user: Select Another User
+  label_all_users_comparison: All Users Comparison
+  label_user_comparison: User Comparison
+  label_user_statistics: User Statistics
+  label_select_user: Select a user
+  
+  # Issue-related labels
+  label_issues_by_status: Issues by Status
+  label_issues_by_priority: Issues by Priority
+  label_issues_by_tracker: Issues by Tracker
+  label_issues_created: Issues Created
+  label_issues_updated: Issues Updated
+  label_issues_closed: Issues Closed
+  label_issues_count: Issues Count
+  label_resolution_time_distribution: Resolution Time Distribution
+  label_resolution_time: Resolution Time
+  label_longest_resolution_time: Issues with Longest Resolution Time
+  text_avg_resolution_time_description: The average time it takes to resolve an issue from creation to closure
+  
+  # Date and time filters
+  label_date_range: Date Range
+  label_from: From
+  label_to: To
+  label_interval: Interval
+  label_day: Day
+  label_week: Week
+  label_month: Month
+  label_quarter: Quarter
+  label_year: Year
+  label_daily: Daily
+  label_weekly: Weekly
+  label_monthly: Monthly
+  label_months: Months
+  label_forever: Forever
+  
+  # Activity and trends
+  label_active_hours: Active Hours by Time of Day
+  label_active_days: Active Days of Week
+  label_activity_count: Activity Count
+  label_health_trend: Health Score Trend
+  
+  # Global overview
+  label_top_projects: Top Projects
+  label_top_users: Top Users
+  label_project: Project
+  label_issue_distribution: Issue Distribution
+  text_top_projects_description: Projects with the highest number of issues and activity (including subprojects and child issues)
+  text_top_users_description: Users with the highest activity across all projects (issues created, updated and comments)
+  label_activity_score: Activity Score
+  
+  # Chart themes and settings
+  label_general_settings: General Settings
+  label_contribution_settings: Contribution Weight Settings
+  label_snapshot_settings: Snapshot Settings
+  label_chart_theme: Chart Theme
+  label_default: Default
+  label_light: Light
+  label_dark: Dark
+  label_default_period: Default Period
+  label_display_closed_issues: Display Closed Issues
+  label_date_format: Date Format
+  text_date_format_info: Specify the format using Ruby's strftime syntax
+  
+  # Contribution weights
+  label_weight_created_issues: Weight for Created Issues
+  label_weight_updated_issues: Weight for Updated Issues
+  label_weight_closed_issues: Weight for Closed Issues
+  text_contribution_weights_info: These weights are used in calculating user contribution scores
+  
+  # Snapshot settings
+  label_enable_snapshots: Enable Historical Snapshots
+  label_snapshot_frequency: Snapshot Frequency
+  label_keep_snapshots: Keep Snapshots For
+  
+  # Buttons and actions
+  button_apply: Apply
+  button_export: Export
+  button_snapshot: Take Snapshot
+  
+  # Activity types and metrics
+  label_activity: Activity
+  label_count: Count
+  label_administrative_tasks: Administrative Tasks
+  label_technical_tasks: Technical Tasks
+  label_on_time_resolutions: On-time Resolutions
+  label_not_on_time_resolutions: Not-on-time Resolutions
+  label_status_updates: Status Updates
+  label_comments: Comments
+  
+  # Generic
+  label_no_data: No data available
+  
+  # Nested options
+  label_nested_options: "Nested Calculation Options"
+  label_include_subprojects: "Include subprojects"
+  label_include_parent_issues: "Include parent/child issues"
+  tooltip_include_subprojects: "Include issues from child projects in statistics calculations"
+  tooltip_include_parent_issues: "Include parent issues and their children in statistics calculations"
+  text_nested_options_explanation: "These options control how deeply the statistics include data across your project hierarchy. Enabling these options gives you a more complete view of your project ecosystem."
+  

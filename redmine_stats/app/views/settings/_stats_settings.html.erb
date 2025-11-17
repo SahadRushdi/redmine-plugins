@@ -1,0 +1,90 @@
+<p><strong><%= l(:label_general_settings) %></strong></p>
+
+<div class="box tabular settings">
+  <p>
+    <label for="settings_chart_theme"><%= l(:label_chart_theme) %></label>
+    <%= select_tag 'settings[chart_theme]', 
+      options_for_select([
+        [l(:label_default), 'default'],
+        [l(:label_light), 'light'],
+        [l(:label_dark), 'dark']
+      ], @settings['chart_theme']) %>
+  </p>
+  
+  <p>
+    <label for="settings_default_period"><%= l(:label_default_period) %></label>
+    <%= select_tag 'settings[default_period]', 
+      options_for_select([
+        [l(:label_day), 'day'],
+        [l(:label_week), 'week'],
+        [l(:label_month), 'month'],
+        [l(:label_quarter), 'quarter'],
+        [l(:label_year), 'year']
+      ], @settings['default_period']) %>
+  </p>
+  
+  <p>
+    <label for="settings_display_closed_issues"><%= l(:label_display_closed_issues) %></label>
+    <%= check_box_tag 'settings[display_closed_issues]', '1', @settings['display_closed_issues'] == '1' %>
+  </p>
+  
+  <p>
+    <label for="settings_date_format"><%= l(:label_date_format) %></label>
+    <%= text_field_tag 'settings[date_format]', @settings['date_format'], size: 10 %>
+    <em class="info"><%= l(:text_date_format_info) %></em>
+  </p>
+</div>
+
+<p><strong><%= l(:label_contribution_settings) %></strong></p>
+
+<div class="box tabular settings">
+  <p>
+    <label for="settings_weight_created"><%= l(:label_weight_created_issues) %></label>
+    <%= text_field_tag 'settings[weight_created]', @settings['weight_created'] || '1.0', size: 5 %>
+  </p>
+  
+  <p>
+    <label for="settings_weight_updated"><%= l(:label_weight_updated_issues) || 'Weight for Updated Issues' %></label>
+    <%= text_field_tag 'settings[weight_updated]', @settings['weight_updated'] || '1.5', size: 5 %>
+  </p>
+  
+  <p>
+    <label for="settings_weight_closed"><%= l(:label_weight_closed_issues) %></label>
+    <%= text_field_tag 'settings[weight_closed]', @settings['weight_closed'] || '2.0', size: 5 %>
+  </p>
+  
+  <p>
+    <em class="info"><%= l(:text_contribution_weights_info) %></em>
+  </p>
+</div>
+
+<p><strong><%= l(:label_snapshot_settings) %></strong></p>
+
+<div class="box tabular settings">
+  <p>
+    <label for="settings_enable_snapshots"><%= l(:label_enable_snapshots) %></label>
+    <%= check_box_tag 'settings[enable_snapshots]', '1', @settings['enable_snapshots'] == '1' %>
+  </p>
+  
+  <p>
+    <label for="settings_snapshot_frequency"><%= l(:label_snapshot_frequency) %></label>
+    <%= select_tag 'settings[snapshot_frequency]', 
+      options_for_select([
+        [l(:label_daily), 'daily'],
+        [l(:label_weekly), 'weekly'],
+        [l(:label_monthly), 'monthly']
+      ], @settings['snapshot_frequency'] || 'weekly') %>
+  </p>
+  
+  <p>
+    <label for="settings_keep_snapshots"><%= l(:label_keep_snapshots) %></label>
+    <%= select_tag 'settings[keep_snapshots]', 
+      options_for_select([
+        ['1 ' + l(:label_month), '1'],
+        ['3 ' + l(:label_months), '3'],
+        ['6 ' + l(:label_months), '6'],
+        ['12 ' + l(:label_months), '12'],
+        [l(:label_forever), 'forever']
+      ], @settings['keep_snapshots'] || '6') %>
+  </p>
+</div> 

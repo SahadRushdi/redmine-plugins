@@ -1,0 +1,340 @@
+<div class="contextual">
+  <%= link_to l(:label_user_reports), user_reports_project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-user' %>
+  <%= link_to l(:label_project_reports), project_reports_project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-projects' %>
+  <%= link_to l(:label_issue_reports), issue_reports_project_stats_path(@project, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues), class: 'icon icon-issue' %>
+</div>
+
+<h2><%= l(:label_stats) %> - <%= @project.name %></h2>
+
+<div class="box filter-controls">
+  <h3><%= l(:label_date_range) %></h3>
+  <%= form_tag project_stats_path(@project), method: :get, id: 'date-range-form' do %>
+    <p>
+      <%= l(:label_from) %>: <%= date_field_tag 'from', @from, size: 10 %>
+      <%= l(:label_to) %>: <%= date_field_tag 'to', @to, size: 10 %>
+      <%= l(:label_interval) %>: 
+      <%= select_tag 'interval', 
+        options_for_select([
+          [l(:label_day), 'day'],
+          [l(:label_week), 'week'],
+          [l(:label_month), 'month']
+        ], params[:interval] || 'month') %>
+      <%= submit_tag l(:button_apply), name: nil, class: 'button-small' %>
+    </p>
+  <% end %>
+</div>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+    <div class="box">
+      <h3 class="contribution-header">
+        <%= l(:label_project_health) %>
+        <a href="#" class="health-score-info" title="<%= l(:tooltip_health_score_info) %>">?</a>
+      </h3>
+      <div id="health-score-tooltip" class="health-score-tooltip">
+        <p><strong><%= l(:label_health_score_explanation) %></strong></p>
+        <p><%= l(:text_health_score_components) %></p>
+        <ul>
+          <li><%= l(:text_resolution_rate) %> (35%) - <%= l(:health_component_resolution_rate_desc) %></li>
+          <li><%= l(:text_overdue_issues) %> (45%) - <%= l(:health_component_overdue_desc) %></li>
+          <li><%= l(:text_resolution_time) %> (20%) - <%= l(:health_component_time_desc) %></li>
+        </ul>
+        <p><%= l(:text_resolved_closed_issues_included) || "Both 'Resolved' and 'Closed' statuses are included in calculations" %></p>
+        <div class="health-score-formula">
+          Score = (Taux de résolution × 0.35) + <br>
+          ((100 - Pénalité de retard) × 0.45) + <br>
+          (Facteur temps × 0.20)
+        </div>
+      </div>
+      
+      <% 
+        # Get detailed health score components
+        detailed_health = RedmineStats::Utils::StatsCalculator.calculate_project_health_score(@project, {from: @from, to: @to, detailed: true})
+        health_components = [
+          { 
+            name: l(:text_resolution_rate), 
+            value: detailed_health[:components][:resolution_rate], 
+            weight: 0.35,
+            weighted_value: detailed_health[:components][:resolution_rate] * 0.35,
+            color: '#4BC0C0',
+            description: l(:health_component_resolution_rate_desc)
+          },
+          { 
+            name: l(:text_overdue_penalty), 
+            value: 100 - detailed_health[:components][:overdue_penalty], 
+            weight: 0.45,
+            weighted_value: (100 - detailed_health[:components][:overdue_penalty]) * 0.45,
+            color: '#FFCE56',
+            description: l(:health_component_overdue_desc)
+          },
+          { 
+            name: l(:text_resolution_time), 
+            value: detailed_health[:components][:time_factor], 
+            weight: 0.2,
+            weighted_value: detailed_health[:components][:time_factor] * 0.2,
+            color: '#FF9F40',
+            description: l(:health_component_time_desc)
+          }
+        ]
+        
+        # Sort components by value for better visualization
+        health_components = health_components.sort_by { |c| -c[:weighted_value] }
+        
+        # Health grade based on score
+        health_grade = case @health_score
+          when 85..100 then 'Excellent'
+          when 70..84 then 'Bon'
+          when 50..69 then 'Moyen'
+          else 'Insuffisant'
+        end
+        
+        # Health grade color
+        health_grade_color = case @health_score
+          when 85..100 then '#4BC0C0' # Green
+          when 70..84 then '#FFCE56' # Yellow
+          when 50..69 then '#FF9F40' # Orange
+          else '#FF6384' # Red
+        end
+      %>
+      
+      <div class="project-health-summary">
+        <div class="health-score-box" style="border-color: <%= health_grade_color %>">
+          <div class="health-score-value" style="color: <%= health_grade_color %>"><%= @health_score %></div>
+          <div class="health-score-label"><%= l(:label_health_score) %></div>
+          <div class="health-grade" style="background-color: <%= health_grade_color %>"><%= health_grade %></div>
+        </div>
+        <div class="project-state" style="margin-top: 8px;">
+          <% state_label = RedmineStats::Utils::StatsCalculator.project_state_label(
+              @health_score,
+              overdue_issues: detailed_health[:metrics][:overdue_issues],
+              total_issues: detailed_health[:metrics][:total_issues]
+            ) %>
+          <strong>État du projet:</strong> <%= state_label %>
+        </div>
+        
+        <div class="health-components">
+          <table class="health-components-table">
+            <thead>
+              <tr>
+                <th><%= l(:label_component) %></th>
+                <th><%= l(:label_value) %></th>
+                <th><%= l(:label_weight) %></th>
+                <th><%= l(:label_contribution) %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% health_components.each do |component| %>
+                <tr>
+                  <td>
+                    <div class="component-name">
+                      <span class="color-dot" style="background-color: <%= component[:color] %>"></span>
+                      <%= component[:name] %>
+                    </div>
+                    <div class="component-desc"><%= component[:description] %></div>
+                  </td>
+                  <td class="numeric"><%= component[:value].to_f.round(1) %></td>
+                  <td class="numeric"><%= (component[:weight] * 100).to_i %>%</td>
+                  <td class="numeric">
+                    <strong><%= component[:weighted_value].round(1) %></strong>
+                    <div class="progress-bar">
+                      <div class="progress-bar-value" style="width: <%= component[:weighted_value] %>%; background-color: <%= component[:color] %>"></div>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+              <tr class="health-total">
+                <td><strong><%= l(:label_total_score) %></strong></td>
+                <td></td>
+                <td></td>
+                <td class="numeric"><strong><%= @health_score %></strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="health-metrics">
+        <h4><%= l(:label_key_metrics) %></h4>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value"><%= @open_issues_count %></div>
+            <div class="metric-label"><%= l(:label_open_issues) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= @resolved_issues_count %></div>
+            <div class="metric-label"><%= l(:label_resolved_issues) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= @closed_issues_count %></div>
+            <div class="metric-label"><%= l(:label_closed_issues) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= @total_issues %></div>
+            <div class="metric-label"><%= l(:label_total_issues) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= @total_issues > 0 ? ((@resolved_issues_count.to_f + @closed_issues_count.to_f) / @total_issues * 100).round(1) : 0 %>%</div>
+            <div class="metric-label"><%= l(:label_completion_rate) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value"><%= detailed_health[:metrics][:overdue_issues] %></div>
+            <div class="metric-label"><%= l(:label_overdue_issues) %></div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value">
+              <% if detailed_health[:metrics][:avg_resolution_time].to_i > 0 %>
+                <%= distance_of_time_in_words(0, detailed_health[:metrics][:avg_resolution_time]) %>
+              <% else %>
+                0
+              <% end %>
+            </div>
+            <div class="metric-label"><%= l(:label_avg_resolution_time) %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="box">
+      <h3><%= l(:label_issues_trend) %></h3>
+      <p class="chart-description"><%= l(:text_issues_trend_description) %></p>
+      <div class="chart-container">
+        <canvas id="issues-trend-chart" class="chart" data-chart='<%= @issues_trend_chart_data %>'></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <div class="splitcontentright">
+    <div class="box">
+      <h3><%= l(:label_top_contributors) %></h3>
+      <p class="chart-description"><%= l(:text_top_contributors_description) %></p>
+      <% if @top_contributors.any? %>
+        <table class="list data-table contributors-table">
+          <thead>
+            <tr>
+              <th><%= l(:label_user) || 'Utilisateur' %></th>
+              <th><%= l(:label_administrative_tasks) || 'Charge administratif' %></th>
+              <th><%= l(:label_technical_tasks) || 'Charge technique' %></th>
+              <th><%= l(:label_contribution_score) %> <a href="#" class="health-score-info" title="<%= l(:tooltip_contribution_score_info) %>">?</a></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @top_contributors.each_with_index do |contributor, index| %>
+              <tr class="<%= index < 3 ? 'top-contributor-' + (index + 1).to_s : '' %>">
+                <td>
+                  <% if index < 3 %>
+                    <span class="contributor-rank rank-<%= index + 1 %>"><%= index + 1 %></span>
+                  <% end %>
+                  <%= link_to contributor[:user].name, user_reports_project_stats_path(@project, :user_id => contributor[:user].id, :from => @from.to_s, :to => @to.to_s, :include_subprojects => @include_subprojects, :include_parent_issues => @include_parent_issues) %>
+                </td>
+                <td>
+                  <% 
+                    # Get the administrative score for this user
+                    user_details = contributor[:user].contribution_details(@project, from: @from, to: @to, include_subprojects: @include_subprojects, include_parent_issues: @include_parent_issues)
+                    admin_score = user_details[:components][:administrative][:value].to_f.round(1)  # Use to_f to handle nil values
+                  %>
+                  <%= admin_score %>
+                </td>
+                <td>
+                  <% 
+                    # Get the technical score for this user
+                    tech_score = user_details[:components][:technical][:value].to_f.round(1)  # Use to_f to handle nil values
+                  %>
+                  <%= tech_score %>
+                </td>
+                <td>
+                  <strong><%= contributor[:score].round(1) %></strong>
+                  <div class="progress-bar">
+                    <% max_score = @top_contributors.map { |c| c[:score] }.max %>
+                    <% percentage = max_score > 0 ? (contributor[:score].to_f / max_score * 100) : 0 %>
+                    <div class="progress-bar-value" style="width: <%= percentage %>%"></div>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div id="contribution-score-tooltip" class="health-score-tooltip">
+          <p><strong><%= l(:label_contribution_score_formula) %></strong></p>
+          <p><%= l(:text_contribution_calculation) %></p>
+          <div class="health-score-formula">
+            Score = (Issues Created × 1.0) + <br>
+            (Issues Updated × 1.0) + <br>
+            (Issues Closed × 1.0) + <br>
+            (Comments × 1.0) + <br>
+            (Status Updates × 1.0) + <br>
+            (On-time Resolutions × 3.0) + <br>
+            (Not-On-time Resolutions × 1.0)
+          </div>
+        </div>
+      <% else %>
+        <p class="nodata"><%= l(:label_no_data) %></p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+    <div class="box">
+      <h3><%= l(:label_issues_by_status) %></h3>
+      <p class="chart-description"><%= l(:text_issues_by_status_description) %></p>
+      <div class="chart-container">
+        <canvas id="status-chart" class="chart" data-chart='<%= @status_chart_data %>'></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <div class="splitcontentright">
+    <div class="box">
+      <h3><%= l(:label_issues_by_priority) %></h3>
+      <p class="chart-description"><%= l(:text_issues_by_priority_description) %></p>
+      <div class="chart-container">
+        <canvas id="priority-chart" class="chart" data-chart='<%= @priority_chart_data %>'></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <h3><%= l(:label_issues_by_tracker) %></h3>
+  <p class="chart-description"><%= l(:text_issues_by_tracker_description) %></p>
+  <div class="chart-container">
+    <canvas id="tracker-chart" class="chart" data-chart='<%= @tracker_chart_data %>'></canvas>
+  </div>
+</div>
+
+<%= render partial: 'includes' %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all charts
+    RedmineStats.initCharts();
+    
+    // Initialize tooltips
+    RedmineStats.initGauge();
+    
+    // Add tooltip functionality for health score info
+    var healthInfo = document.querySelector('a[title="<%= l(:tooltip_health_score_info) %>"]');
+    if (healthInfo) {
+      healthInfo.addEventListener('click', function(e) {
+        e.preventDefault();
+        var tooltip = document.getElementById('health-score-tooltip');
+        if (tooltip) {
+          tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+        }
+      });
+    }
+    
+    // Add tooltip toggle for contribution score
+    var contributionInfo = document.querySelector('a[title="<%= l(:tooltip_contribution_score_info) %>"]');
+    if (contributionInfo) {
+      contributionInfo.addEventListener('click', function(e) {
+        e.preventDefault();
+        var tooltip = document.getElementById('contribution-score-tooltip');
+        if (tooltip) {
+          tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+        }
+      });
+    }
+  });
+</script> 

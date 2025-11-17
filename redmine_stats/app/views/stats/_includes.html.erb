@@ -1,0 +1,20 @@
+<% content_for :header_tags do %>
+  <%= javascript_include_tag 'chart.min.js', plugin: 'redmine_stats' %>
+  <%= javascript_include_tag 'stats_charts.js', plugin: 'redmine_stats' %>
+  <%= stylesheet_link_tag 'redmine_stats.css', plugin: 'redmine_stats' %>
+<% end %>
+
+<script>
+  // Global configuration to ensure all charts consistently display nested project and issue data
+  document.addEventListener('DOMContentLoaded', function() {
+    // Make sure all charts display tooltip information about nested data inclusion
+    if (typeof Chart !== 'undefined' && Chart.defaults && Chart.defaults.global) {
+      var originalTooltipFooterCallback = Chart.defaults.global.tooltipFooter;
+      
+      Chart.defaults.global.tooltipFooter = function(tooltipItems, data) {
+        var footer = originalTooltipFooterCallback ? originalTooltipFooterCallback(tooltipItems, data) : '';
+        return footer + '\n* Includes data from nested projects and related issues';
+      };
+    }
+  });
+</script> 
