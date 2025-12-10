@@ -1,6 +1,27 @@
-/* Time Analytics Plugin Styles */
+/* Time Analytics Plugin - Simplified Styles */
 
-/* Filter Controls */
+/* Form Controls */
+.filter-select,
+.date-input,
+.search-input,
+.chart-type-select,
+.pagination-form select {
+  box-sizing: border-box;
+  font-size: 13px;
+  line-height: 1.4;       /* ensure enough text height */
+  height: auto;           /* avoid fixed height clipping */
+  padding: 8px 10px;      /* slightly larger padding for visibility */
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  overflow: visible;      /* prevent clipping in some browsers */
+  background-clip: padding-box;
+}
+
+.search-input {
+  min-width: 220px;
+}
+
+/* Filter Section */
 .filter-controls {
   background-color: #f9f9f9;
   border: 1px solid #e0e0e0;
@@ -12,14 +33,14 @@
 .filter-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
   gap: 15px;
+  align-items: flex-end;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  min-width: 120px;
+  min-width: 160px;
 }
 
 .filter-group label {
@@ -28,35 +49,20 @@
   font-size: 12px;
 }
 
-.filter-select, .date-input, .search-input {
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 13px;
-}
-
-.search-input {
-  min-width: 200px;
-}
-
 /* Stats Summary */
-.stats-summary {
-  margin-bottom: 20px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
-  margin-top: 10px;
+  margin: 10px 0 20px;
 }
 
 .summary-item {
   text-align: center;
   padding: 15px;
   background-color: #f5f5f5;
-  border-radius: 4px;
   border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .summary-value {
@@ -73,19 +79,13 @@
   font-weight: 600;
 }
 
-/* Visualization Controls */
-.visualization-controls {
+/* Chart */
+.visualization-controls,
+.table-controls {
   float: right;
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.chart-type-select {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 12px;
 }
 
 .chart-wrapper {
@@ -94,12 +94,7 @@
   margin: 15px 0;
 }
 
-.chart {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Table Styles */
+/* Table */
 .time-entries-table {
   width: 100%;
   border-collapse: collapse;
@@ -135,72 +130,29 @@
   border-bottom: none;
 }
 
-/* Column-specific styles */
-.date-column {
-  width: 100px;
-  white-space: nowrap;
-}
-
-.project-column {
-  width: 150px;
-}
-
-.activity-column {
-  width: 120px;
-}
-
-.issue-column {
-  width: 200px;
-}
-
-.comment-column {
-  max-width: 250px;
-  word-wrap: break-word;
-}
-
-.hours-column {
-  width: 80px;
-  text-align: right;
-  font-family: monospace;
-}
+/* Column Widths */
+.date-column { width: 100px; white-space: nowrap; }
+.project-column { width: 150px; }
+.activity-column { width: 120px; }
+.issue-column { width: 200px; }
+.comment-column { max-width: 250px; word-wrap: break-word; }
+.hours-column { width: 80px; text-align: right; font-family: monospace; }
 
 /* Links */
-.project-link, .issue-link {
+.project-link,
+.issue-link {
   color: #628db6;
   text-decoration: none;
 }
 
-.project-link:hover, .issue-link:hover {
+.project-link:hover,
+.issue-link:hover {
   text-decoration: underline;
 }
 
 .no-issue {
   color: #999;
   font-style: italic;
-}
-
-/* Table Controls */
-.table-controls {
-  float: right;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pagination-form {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.pagination-form label {
-  font-size: 12px;
-  font-weight: normal;
-}
-
-.pagination-form select {
-  padding: 2px 4px;
-  font-size: 12px;
 }
 
 /* Pagination */
@@ -243,56 +195,19 @@
   font-weight: bold;
 }
 
-.pagination-info {
+.pagination-info,
+.pagination-form label {
   font-size: 12px;
   color: #666;
 }
 
-/* Tabs */
-.tabs ul {
-  border-bottom: 1px solid #bbbbbb;
-  margin: 0;
-  padding: 0;
-}
-
-.tabs ul li {
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-}
-
-.tabs ul li a {
-  display: block;
-  padding: 8px 12px;
-  margin-right: 2px;
-  background-color: #f5f5f5;
-  border: 1px solid #bbbbbb;
-  border-bottom: none;
-  text-decoration: none;
-  color: #555;
-}
-
-.tabs ul li.selected a {
-  background-color: white;
-  font-weight: bold;
-  color: #333;
-}
-
-.tabs ul li a:hover {
-  background-color: #eeeeee;
-}
-
-.tab-content {
-  padding-top: 20px;
-}
-
-/* Error and Info Messages */
+/* Messages */
 .error-message {
   background-color: #ffebee;
   color: #c62828;
   padding: 10px;
-  border-radius: 4px;
   border: 1px solid #ffcdd2;
+  border-radius: 4px;
   text-align: center;
 }
 
@@ -300,8 +215,8 @@
   background-color: #e3f2fd;
   color: #1565c0;
   padding: 10px;
-  border-radius: 4px;
   border: 1px solid #bbdefb;
+  border-radius: 4px;
 }
 
 .nodata {
@@ -311,43 +226,42 @@
   padding: 20px;
 }
 
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
   .filter-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .filter-group {
-    min-width: auto;
+
+  .filter-group,
+  .filter-select,
+  .date-input,
+  .search-input {
+    width: 100%;
+    min-width: 0;
   }
-  
+
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .visualization-controls {
-    float: none;
-    margin-top: 10px;
-  }
-  
+
+  .visualization-controls,
   .table-controls {
     float: none;
-    margin-bottom: 10px;
+    margin: 10px 0;
   }
-  
+
   .pagination-wrapper {
     flex-direction: column;
     gap: 10px;
     text-align: center;
   }
-  
-  /* Hide some columns on mobile */
+
   .time-entries-table .activity-column,
   .time-entries-table .comment-column {
     display: none;
   }
-  
+
   .chart-wrapper {
     height: 300px;
   }
@@ -357,8 +271,7 @@
   .summary-grid {
     grid-template-columns: 1fr;
   }
-  
-  /* Hide more columns on very small screens */
+
   .time-entries-table .issue-column {
     display: none;
   }
