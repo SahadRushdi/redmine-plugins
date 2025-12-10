@@ -1,0 +1,74 @@
+en:
+  # Plugin labels
+  label_time_analytics: "Time Analytics"
+  label_individual_dashboard: "Individual Dashboard"
+  label_team_dashboard: "Team Dashboard"
+  label_custom_dashboard: "Custom Dashboard"
+  
+  # General labels
+  label_filters: "Filters"
+  label_time_period: "Time Period"
+  label_grouping: "Grouping"
+  label_search: "Search"
+  label_visualization: "Visualization"
+  label_time_entries: "Time Entries"
+  label_summary: "Summary"
+  label_export_csv: "Export CSV"
+  
+  # Filter options
+  label_today: "Today"
+  label_this_week: "This Week"
+  label_this_month: "This Month"
+  label_this_year: "This Year"
+  label_custom_range: "Custom Range"
+  
+  # Grouping options
+  label_daily: "Daily"
+  label_weekly: "Weekly"
+  label_monthly: "Monthly"
+  label_yearly: "Yearly"
+  
+  # Chart types
+  label_bar_chart: "Bar Chart"
+  label_line_chart: "Line Chart"
+  label_pie_chart: "Pie Chart"
+  
+  # Table columns
+  label_date: "Date"
+  label_project: "Project"
+  label_activity: "Activity"
+  label_issue: "Issue"
+  label_comment: "Comment"
+  label_hours: "Hours"
+  label_total: "Total"
+  
+  # Summary statistics
+  label_total_hours: "Total Hours"
+  label_entries_count: "Entries"
+  label_avg_per_day: "Avg/Day"
+  label_max_daily: "Max Daily"
+  label_min_daily: "Min Daily"
+  
+  # Buttons
+  button_apply: "Apply"
+  button_clear: "Clear"
+  button_show_chart: "Show Chart"
+  button_hide_chart: "Hide Chart"
+  
+  # Pagination
+  label_per_page: "Per page:"
+  label_previous: "Previous"
+  label_next: "Next"
+  
+  # Messages
+  label_no_data: "No data available for the selected period"
+  text_coming_soon: "This feature is coming soon."
+  text_team_dashboard_description: "Team Dashboard will provide insights into team productivity, workload distribution, and collaborative metrics."
+  text_custom_dashboard_description: "Custom Dashboard will allow you to create personalized analytics views with configurable widgets and metrics."
+  text_search_placeholder: "Search projects, issues, or comments..."
+  text_export_confirm: "Export time entries as CSV?"
+  text_pagination_info: "Showing %{from} to %{to} of %{total} entries"
+  
+  # Date/Time formats
+  label_from: "From"
+  label_to: "To"

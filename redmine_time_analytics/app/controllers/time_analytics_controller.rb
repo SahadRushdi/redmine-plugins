@@ -1,0 +1,380 @@
+class TimeAnalyticsController < ApplicationController
+  before_action :require_login
+  before_action :set_date_range
+  before_action :set_grouping
+  helper :time_analytics
+
+  def index
+    # Default to individual dashboard
+    permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page)
+    redirect_to time_analytics_individual_dashboard_path(permitted_params)
+  end
+
+  def individual_dashboard
+    @user = User.current
+    
+    # Get time entries for the current user with project visibility check
+    @time_entries = TimeEntry.joins(:project)
+                             .where(user: @user)
+                             .where(spent_on: @from..@to)
+                             .where(projects: { status: Project::STATUS_ACTIVE })
+                             .includes(:project, :issue, :activity)
+                             .order('time_entries.spent_on DESC, time_entries.created_on DESC')
+
+    # Apply search filter if present
+    if params[:search].present?
+      search_term = "%#{params[:search]}%"
+      @time_entries = @time_entries.where(
+        "projects.name ILIKE ? OR issues.subject ILIKE ? OR time_entries.comments ILIKE ?",
+        search_term, search_term, search_term
+      )
+    end
+
+    # Calculate totals and statistics
+    @total_hours = @time_entries.sum(:hours)
+    @entry_count = @time_entries.count
+    @avg_hours_per_day = calculate_avg_hours_per_day
+    @max_daily_hours = calculate_max_daily_hours
+    @min_daily_hours = calculate_min_daily_hours
+
+    # Generate chart data based on grouping
+    @chart_data = generate_chart_data(@time_entries, @grouping, params[:chart_type] || 'bar')
+
+    # Pagination
+    @limit = params[:per_page].present? ? params[:per_page].to_i : 25
+    @offset = params[:page].present? ? (params[:page].to_i - 1) * @limit : 0
+    @paginated_entries = @time_entries.limit(@limit).offset(@offset)
+    @total_pages = (@entry_count.to_f / @limit).ceil
+
+    respond_to do |format|
+      format.html
+      format.json { render json: { chart_data: @chart_data, total_hours: @total_hours } }
+    end
+  end
+
+  def team_dashboard
+    # Placeholder for future implementation
+    render plain: "Team Dashboard - Coming Soon"
+  end
+
+  def custom_dashboard
+    # Placeholder for future implementation
+    render plain: "Custom Dashboard - Coming Soon"
+  end
+
+  def export_csv
+    @user = User.current
+    @time_entries = TimeEntry.joins(:project)
+                             .where(user: @user)
+                             .where(spent_on: @from..@to)
+                             .where(projects: { status: Project::STATUS_ACTIVE })
+                             .includes(:project, :issue, :activity)
+                             .order('time_entries.spent_on DESC')
+
+    # Apply search filter if present
+    if params[:search].present?
+      search_term = "%#{params[:search]}%"
+      @time_entries = @time_entries.where(
+        "projects.name ILIKE ? OR issues.subject ILIKE ? OR time_entries.comments ILIKE ?",
+        search_term, search_term, search_term
+      )
+    end
+
+    csv_data = export_time_entries_to_csv(@time_entries)
+    
+    send_data csv_data, 
+              filename: "time_analytics_#{@user.login}_#{@from}_#{@to}.csv",
+              type: 'text/csv'
+  end
+
+  private
+
+  def set_date_range
+    case params[:filter]
+    when 'today'
+      @from = @to = Date.current
+    when 'this_week'
+      @from = Date.current.beginning_of_week
+      @to = Date.current.end_of_week
+    when 'this_month'
+      @from = Date.current.beginning_of_month
+      @to = Date.current.end_of_month
+    when 'this_year'
+      @from = Date.current.beginning_of_year
+      @to = Date.current.end_of_year
+    when 'custom'
+      @from = params[:from].present? ? Date.parse(params[:from]) : (Date.current - 30.days)
+      @to = params[:to].present? ? Date.parse(params[:to]) : Date.current
+    else
+      # Default to last 30 days
+      @from = Date.current - 30.days
+      @to = Date.current
+    end
+  rescue ArgumentError
+    # Handle invalid date format
+    @from = Date.current - 30.days
+    @to = Date.current
+  end
+
+  def set_grouping
+    @grouping = params[:grouping].presence || 'daily'
+    @grouping = 'daily' unless %w[daily weekly monthly yearly].include?(@grouping)
+  end
+
+  def calculate_avg_hours_per_day
+    return 0 if @time_entries.empty?
+    
+    # Remove order clause to avoid ambiguity in GROUP BY
+    days_with_entries = @time_entries.reorder(nil).group(:spent_on).sum(:hours).keys.count
+    return 0 if days_with_entries.zero?
+    
+    (@total_hours / days_with_entries).round(2)
+  end
+
+  def calculate_max_daily_hours
+    # Remove order clause to avoid ambiguity in GROUP BY
+    daily_totals = @time_entries.reorder(nil).group(:spent_on).sum(:hours).values
+    daily_totals.max || 0
+  end
+
+  def calculate_min_daily_hours
+    # Remove order clause to avoid ambiguity in GROUP BY
+    daily_totals = @time_entries.reorder(nil).group(:spent_on).sum(:hours).values
+    return 0 if daily_totals.empty?
+    daily_totals.min
+  end
+
+  # Inline Chart Helper methods
+  def generate_chart_data(time_entries, grouping, chart_type)
+    # Group data by the specified grouping
+    grouped_data = group_time_entries(time_entries, grouping)
+    
+    case chart_type
+    when 'pie'
+      generate_pie_chart_data(grouped_data)
+    when 'line'
+      generate_line_chart_data(grouped_data)
+    else
+      generate_bar_chart_data(grouped_data)
+    end
+  end
+
+  def group_time_entries(time_entries, grouping)
+    # Remove order clause to avoid ambiguity in GROUP BY operations
+    base_query = time_entries.reorder(nil)
+    
+    case grouping
+    when 'daily'
+      base_query.group(:spent_on).sum(:hours)
+    when 'weekly'
+      base_query.group('DATE_TRUNC(\'week\', spent_on)').sum(:hours)
+    when 'monthly'
+      base_query.group('DATE_TRUNC(\'month\', spent_on)').sum(:hours)
+    when 'yearly'
+      base_query.group('DATE_TRUNC(\'year\', spent_on)').sum(:hours)
+    else
+      base_query.group(:spent_on).sum(:hours)
+    end
+  end
+
+  def generate_colors(count)
+    colors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+      '#FF9F40', '#8AC249', '#EA5F89', '#00D1B2', '#958AF7'
+    ]
+    
+    if count <= colors.size
+      colors.take(count)
+    else
+      result = colors.dup
+      (count - colors.size).times do |i|
+        hue = (i * 137.5) % 360
+        result << "hsl(#{hue}, 70%, 60%)"
+      end
+      result
+    end
+  end
+
+  def format_chart_label(key)
+    return key.to_s unless key.respond_to?(:strftime)
+    
+    case key
+    when Date
+      key.strftime('%b %d, %Y')
+    when Time, DateTime
+      key.strftime('%b %d, %Y')
+    else
+      key.to_s
+    end
+  rescue
+    key.to_s
+  end
+
+  def generate_pie_chart_data(data_hash)
+    return empty_chart_data('pie') if data_hash.empty?
+
+    formatted_labels = data_hash.keys.map { |key| format_chart_label(key) }
+    
+    chart_data = {
+      labels: formatted_labels,
+      datasets: [{
+        data: data_hash.values,
+        backgroundColor: generate_colors(data_hash.size),
+        borderWidth: 1,
+        borderColor: '#fff'
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            padding: 15,
+            boxWidth: 12
+          }
+        }
+      }
+    }
+
+    {
+      type: 'pie',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
+  end
+
+  def generate_bar_chart_data(data_hash)
+    return empty_chart_data('bar') if data_hash.empty?
+
+    formatted_labels = data_hash.keys.map { |key| format_chart_label(key) }
+    
+    chart_data = {
+      labels: formatted_labels,
+      datasets: [{
+        label: 'Hours',
+        data: data_hash.values,
+        backgroundColor: generate_colors(data_hash.size),
+        borderWidth: 1
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+
+    {
+      type: 'bar',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
+  end
+
+  def generate_line_chart_data(data_hash)
+    return empty_chart_data('line') if data_hash.empty?
+
+    # Sort data by date for proper line chart display
+    sorted_data = data_hash.sort_by { |key, _| key.is_a?(Date) ? key : Date.parse(key.to_s) rescue Date.current }
+    formatted_labels = sorted_data.map { |key, _| format_chart_label(key) }
+    
+    chart_data = {
+      labels: formatted_labels,
+      datasets: [{
+        label: 'Hours',
+        data: sorted_data.map { |_, value| value },
+        borderColor: '#36a2eb',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        fill: true,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+
+    {
+      type: 'line',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
+  end
+
+  def empty_chart_data(chart_type)
+    {
+      type: chart_type,
+      data: {
+        labels: ['No Data'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['rgba(200, 200, 200, 0.2)'],
+          borderColor: ['rgba(200, 200, 200, 0.6)'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    }.to_json.html_safe
+  end
+
+  # Inline CSV Export methods
+  def export_time_entries_to_csv(time_entries)
+    require 'csv'
+    
+    CSV.generate(headers: true) do |csv|
+      # Add headers
+      csv << ['Date', 'Project', 'Activity', 'Issue', 'Comment', 'Hours']
+      
+      # Add data rows
+      time_entries.each do |entry|
+        csv << [
+          entry.spent_on.strftime('%Y-%m-%d'),
+          entry.project.name,
+          entry.activity&.name || '-',
+          entry.issue ? "##{entry.issue.id}: #{entry.issue.subject}" : '-',
+          entry.comments || '-',
+          sprintf('%.2f', entry.hours)
+        ]
+      end
+      
+      # Add summary row
+      total_hours = time_entries.map { |entry| entry.hours }.sum
+      csv << []
+      csv << ['TOTAL', '', '', '', '', sprintf('%.2f', total_hours)]
+    end
+  end
+end

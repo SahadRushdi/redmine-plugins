@@ -1,0 +1,24 @@
+<div class="contextual">
+  <%= link_to l(:label_export_csv), time_analytics_export_csv_path, 
+      method: :post, class: 'icon icon-download', 
+      data: { confirm: l(:text_export_confirm) } %>
+</div>
+
+<h2><%= l(:label_time_analytics) %></h2>
+
+<div class="tabs">
+  <ul>
+    <% time_analytics_tabs.each do |tab| %>
+      <li class="<%= 'selected' if current_tab == tab[:name] %>">
+        <%= link_to tab[:label], 
+            url_for(controller: 'time_analytics', action: tab[:name]) %>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+<div class="tab-content">
+  <%= render partial: current_tab %>
+</div>
+
+<%= render partial: 'includes' %>

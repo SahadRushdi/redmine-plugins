@@ -1,0 +1,278 @@
+<%= render 'includes' %>
+
+<div class="contextual">
+  <%= link_to l(:label_export_csv), time_analytics_export_csv_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page)), 
+      method: :post, class: 'icon icon-download' %>
+</div>
+
+<h2><%= l(:label_individual_dashboard) %></h2>
+
+<!-- Filters Section -->
+<div class="box filter-controls">
+  <h3><%= l(:label_filters) %></h3>
+  <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, id: 'time-analytics-form' do %>
+    <%= hidden_field_tag :chart_type, params[:chart_type] || 'bar' %>
+    <div class="filter-row">
+      <div class="filter-group">
+        <%= label_tag :filter, l(:label_time_period) %>
+        <%= select_tag :filter, options_for_select(time_filter_options, params[:filter]), 
+            onchange: 'toggleCustomDateRange()', class: 'filter-select' %>
+      </div>
+
+      <div class="filter-group" id="custom-date-range" style="<%= 'display: none;' unless params[:filter] == 'custom' %>">
+        <%= label_tag :from, l(:label_from) %>
+        <%= date_field_tag :from, params[:from] || @from, class: 'date-input' %>
+        <%= label_tag :to, l(:label_to) %>
+        <%= date_field_tag :to, params[:to] || @to, class: 'date-input' %>
+      </div>
+
+      <div class="filter-group">
+        <%= label_tag :grouping, l(:label_grouping) %>
+        <%= select_tag :grouping, options_for_select(grouping_options, @grouping), 
+            class: 'filter-select' %>
+      </div>
+
+      <div class="filter-group">
+        <%= label_tag :search, l(:label_search) %>
+        <%= text_field_tag :search, params[:search], placeholder: l(:text_search_placeholder), 
+            class: 'search-input' %>
+      </div>
+
+      <div class="filter-group">
+        <%= submit_tag l(:button_apply), class: 'button button-small' %>
+        <%= link_to l(:button_clear), time_analytics_individual_dashboard_path, 
+            class: 'button button-small' %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Statistics Summary -->
+<div class="box stats-summary">
+  <h3><%= l(:label_summary) %></h3>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="summary-value"><%= format_hours(@total_hours) %></div>
+      <div class="summary-label"><%= l(:label_total_hours) %></div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value"><%= @entry_count %></div>
+      <div class="summary-label"><%= l(:label_entries_count) %></div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value"><%= format_hours(@avg_hours_per_day) %></div>
+      <div class="summary-label"><%= l(:label_avg_per_day) %></div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value"><%= format_hours(@max_daily_hours) %></div>
+      <div class="summary-label"><%= l(:label_max_daily) %></div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value"><%= format_hours(@min_daily_hours) %></div>
+      <div class="summary-label"><%= l(:label_min_daily) %></div>
+    </div>
+  </div>
+</div>
+
+<!-- Visualization Section -->
+<div class="box">
+  <h3>
+    <%= l(:label_visualization) %>
+    <div class="visualization-controls">
+      <%= select_tag :chart_type, options_for_select(chart_type_options, params[:chart_type] || 'bar'),
+          onchange: 'updateChart()', class: 'chart-type-select' %>
+      <button type="button" onclick="toggleVisualization()" class="button button-small" id="toggle-chart-btn">
+        Hide Chart
+      </button>
+    </div>
+  </h3>
+  
+  <div id="chart-container" style="display: block;">
+    <div class="chart-wrapper">
+      <canvas id="time-chart" class="chart" data-chart='<%= @chart_data %>'></canvas>
+    </div>
+  </div>
+</div></div>
+
+<!-- Results Table -->
+<div class="box">
+  <h3>
+    <%= l(:label_time_entries) %>
+    <div class="table-controls">
+      <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, 
+          class: 'pagination-form' do %>
+        <%= hidden_field_tag :filter, params[:filter] %>
+        <%= hidden_field_tag :from, params[:from] %>
+        <%= hidden_field_tag :to, params[:to] %>
+        <%= hidden_field_tag :grouping, params[:grouping] %>
+        <%= hidden_field_tag :search, params[:search] %>
+        <%= hidden_field_tag :chart_type, params[:chart_type] %>
+        <%= label_tag :per_page, l(:label_per_page) %>
+        <%= select_tag :per_page, options_for_select(per_page_options, @limit),
+            onchange: 'this.form.submit()' %>
+      <% end %>
+    </div>
+  </h3>
+
+  <% if @paginated_entries.any? %>
+    <table class="list time-entries-table">
+      <thead>
+        <tr>
+          <th><%= l(:label_date) %></th>
+          <th><%= l(:label_project) %></th>
+          <th><%= l(:label_activity) %></th>
+          <th><%= l(:label_issue) %></th>
+          <th><%= l(:label_comment) %></th>
+          <th class="hours-column"><%= l(:label_hours) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @paginated_entries.each do |entry| %>
+          <tr>
+            <td class="date-column"><%= entry.spent_on.strftime('%Y-%m-%d') %></td>
+            <td class="project-column"><%= project_link(entry.project) %></td>
+            <td class="activity-column"><%= activity_name(entry.activity) %></td>
+            <td class="issue-column"><%= issue_link_or_text(entry.issue) %></td>
+            <td class="comment-column">
+              <%= truncate(entry.comments, length: 100) if entry.comments.present? %>
+            </td>
+            <td class="hours-column"><%= format_hours(entry.hours) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="5"><strong><%= l(:label_total) %></strong></td>
+          <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+      <% current_page = params[:page].to_i > 0 ? params[:page].to_i : 1 %>
+      <% permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page).except(:page) %>
+      <% base_url = time_analytics_individual_dashboard_path + "?" + permitted_params.to_param %>
+      <%= pagination_links(current_page, @total_pages, base_url).html_safe %>
+      
+      <div class="pagination-info">
+        <%= l(:text_pagination_info, 
+            from: (@offset + 1), 
+            to: [@offset + @limit, @entry_count].min, 
+            total: @entry_count) %>
+      </div>
+    </div>
+
+  <% else %>
+    <p class="nodata"><%= l(:label_no_data) %></p>
+  <% end %>
+</div>
+
+<!-- Chart.js loaded via includes partial -->
+
+<script>
+// Global chart instance
+var timeAnalyticsChart = null;
+
+function toggleCustomDateRange() {
+  var filter = document.getElementById('filter').value;
+  var customRange = document.getElementById('custom-date-range');
+  if (filter === 'custom') {
+    customRange.style.display = 'block';
+  } else {
+    customRange.style.display = 'none';
+  }
+}
+
+function toggleVisualization() {
+  var container = document.getElementById('chart-container');
+  var btn = document.getElementById('toggle-chart-btn');
+  
+  if (container.style.display === 'none' || container.style.display === '') {
+    container.style.display = 'block';
+    btn.textContent = 'Hide Chart';
+    // Initialize chart if not already done
+    if (!timeAnalyticsChart) {
+      initChart();
+    }
+  } else {
+    container.style.display = 'none';
+    btn.textContent = 'Show Chart';
+  }
+}
+
+function initChart() {
+  var chartElement = document.getElementById('time-chart');
+  if (!chartElement) {
+    console.log('Chart element not found');
+    return;
+  }
+
+  // Prevent multiple chart creation
+  if (timeAnalyticsChart) {
+    timeAnalyticsChart.destroy();
+    timeAnalyticsChart = null;
+  }
+
+  try {
+    var chartData = chartElement.getAttribute('data-chart');
+    if (!chartData || chartData === 'null' || chartData === '') {
+      console.log('No chart data available');
+      chartElement.parentElement.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No data available for chart</p>';
+      return;
+    }
+
+    var config = JSON.parse(chartData);
+    
+    // Ensure responsive configuration
+    if (!config.options) {
+      config.options = {};
+    }
+    config.options.responsive = true;
+    config.options.maintainAspectRatio = false;
+    
+    console.log('Creating chart with config:', config);
+    timeAnalyticsChart = new Chart(chartElement, config);
+    console.log('Chart created successfully');
+    
+  } catch (error) {
+    console.error('Error creating chart:', error);
+    chartElement.parentElement.innerHTML = '<p style="text-align: center; color: #red; padding: 20px;">Error loading chart: ' + error.message + '</p>';
+  }
+}
+
+function updateChart() {
+  var chartType = document.getElementById('chart_type').value;
+  var currentForm = document.getElementById('time-analytics-form');
+  
+  var chartTypeInput = currentForm.querySelector('input[name="chart_type"]');
+  if (!chartTypeInput) {
+    chartTypeInput = document.createElement('input');
+    chartTypeInput.type = 'hidden';
+    chartTypeInput.name = 'chart_type';
+    currentForm.appendChild(chartTypeInput);
+  }
+  chartTypeInput.value = chartType;
+  
+  // Submit the form to get new chart data
+  currentForm.submit();
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing chart...');
+  toggleCustomDateRange();
+  
+  // Initialize chart after a small delay to ensure DOM is fully rendered
+  setTimeout(function() {
+    initChart();
+  }, 100);
+});
+
+// Also initialize if page is already loaded
+if (document.readyState === 'complete') {
+  setTimeout(function() {
+    initChart();
+  }, 100);
+}
+</script>

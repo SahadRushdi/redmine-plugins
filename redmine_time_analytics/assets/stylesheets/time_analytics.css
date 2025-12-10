@@ -1,0 +1,365 @@
+/* Time Analytics Plugin Styles */
+
+/* Filter Controls */
+.filter-controls {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 15px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.filter-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.filter-select, .date-input, .search-input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.search-input {
+  min-width: 200px;
+}
+
+/* Stats Summary */
+.stats-summary {
+  margin-bottom: 20px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.summary-item {
+  text-align: center;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #36a2eb;
+  margin-bottom: 5px;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Visualization Controls */
+.visualization-controls {
+  float: right;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-type-select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 400px;
+  margin: 15px 0;
+}
+
+.chart {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Table Styles */
+.time-entries-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.time-entries-table th {
+  background-color: #f1f1f1;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.time-entries-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.time-entries-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.time-entries-table .total-row {
+  background-color: #f0f0f0;
+  border-top: 2px solid #ddd;
+}
+
+.time-entries-table .total-row td {
+  font-weight: bold;
+  border-bottom: none;
+}
+
+/* Column-specific styles */
+.date-column {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.project-column {
+  width: 150px;
+}
+
+.activity-column {
+  width: 120px;
+}
+
+.issue-column {
+  width: 200px;
+}
+
+.comment-column {
+  max-width: 250px;
+  word-wrap: break-word;
+}
+
+.hours-column {
+  width: 80px;
+  text-align: right;
+  font-family: monospace;
+}
+
+/* Links */
+.project-link, .issue-link {
+  color: #628db6;
+  text-decoration: none;
+}
+
+.project-link:hover, .issue-link:hover {
+  text-decoration: underline;
+}
+
+.no-issue {
+  color: #999;
+  font-style: italic;
+}
+
+/* Table Controls */
+.table-controls {
+  float: right;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-form {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-form label {
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.pagination-form select {
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* Pagination */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-link {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #628db6;
+  text-decoration: none;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.pagination-link:hover {
+  background-color: #f0f0f0;
+}
+
+.pagination-current {
+  padding: 6px 10px;
+  border: 1px solid #628db6;
+  background-color: #628db6;
+  color: white;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.pagination-info {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Tabs */
+.tabs ul {
+  border-bottom: 1px solid #bbbbbb;
+  margin: 0;
+  padding: 0;
+}
+
+.tabs ul li {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+.tabs ul li a {
+  display: block;
+  padding: 8px 12px;
+  margin-right: 2px;
+  background-color: #f5f5f5;
+  border: 1px solid #bbbbbb;
+  border-bottom: none;
+  text-decoration: none;
+  color: #555;
+}
+
+.tabs ul li.selected a {
+  background-color: white;
+  font-weight: bold;
+  color: #333;
+}
+
+.tabs ul li a:hover {
+  background-color: #eeeeee;
+}
+
+.tab-content {
+  padding-top: 20px;
+}
+
+/* Error and Info Messages */
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ffcdd2;
+  text-align: center;
+}
+
+.info {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #bbdefb;
+}
+
+.nodata {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    min-width: auto;
+  }
+  
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .visualization-controls {
+    float: none;
+    margin-top: 10px;
+  }
+  
+  .table-controls {
+    float: none;
+    margin-bottom: 10px;
+  }
+  
+  .pagination-wrapper {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  /* Hide some columns on mobile */
+  .time-entries-table .activity-column,
+  .time-entries-table .comment-column {
+    display: none;
+  }
+  
+  .chart-wrapper {
+    height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Hide more columns on very small screens */
+  .time-entries-table .issue-column {
+    display: none;
+  }
+}
