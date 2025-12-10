@@ -79,8 +79,8 @@
   <h3>
     <%= l(:label_visualization) %>
     <div class="visualization-controls">
-      <%= select_tag :chart_type, options_for_select(chart_type_options, params[:chart_type] || 'bar'),
-          onchange: 'updateChart()', class: 'chart-type-select' %>
+      <%= select_tag 'chart_type_select', options_for_select(chart_type_options, params[:chart_type] || 'bar'),
+          onchange: 'updateChart()', class: 'chart-type-select', id: 'chart_type_select' %>
       <button type="button" onclick="toggleVisualization()" class="button button-small" id="toggle-chart-btn">
         Hide Chart
       </button>
@@ -242,20 +242,156 @@ function initChart() {
 }
 
 function updateChart() {
-  var chartType = document.getElementById('chart_type').value;
-  var currentForm = document.getElementById('time-analytics-form');
-  
-  var chartTypeInput = currentForm.querySelector('input[name="chart_type"]');
-  if (!chartTypeInput) {
-    chartTypeInput = document.createElement('input');
-    chartTypeInput.type = 'hidden';
-    chartTypeInput.name = 'chart_type';
-    currentForm.appendChild(chartTypeInput);
+  var chartTypeDropdown = document.getElementById('chart_type_select');
+  console.log('Dropdown element:', chartTypeDropdown);
+  console.log('Available options:');
+  if (chartTypeDropdown) {
+    for (var i = 0; i < chartTypeDropdown.options.length; i++) {
+      console.log('- Option:', chartTypeDropdown.options[i].value, chartTypeDropdown.options[i].text);
+    }
   }
-  chartTypeInput.value = chartType;
+  console.log('Selected value:', chartTypeDropdown ? chartTypeDropdown.value : 'NOT FOUND');
   
-  // Submit the form to get new chart data
-  currentForm.submit();
+  if (!chartTypeDropdown) {
+    console.error('Chart type dropdown not found!');
+    return;
+  }
+  
+  var chartType = chartTypeDropdown.value;
+  console.log('Switching to chart type:', chartType);
+  
+  // Get the current chart element and its data
+  var chartElement = document.getElementById('time-chart');
+  if (!chartElement) {
+    console.error('Chart element not found');
+    return;
+  }
+  
+  var currentChartData = chartElement.getAttribute('data-chart');
+  if (!currentChartData) {
+    console.error('No chart data found');
+    return;
+  }
+  
+  try {
+    // Parse the current chart configuration
+    var chartConfig = JSON.parse(currentChartData);
+    console.log('Current chart config:', chartConfig);
+    
+    // Transform the chart type while keeping the same data
+    var newChartConfig = transformChartType(chartConfig, chartType);
+    
+    // Update the chart element with new configuration
+    chartElement.setAttribute('data-chart', JSON.stringify(newChartConfig));
+    
+    // Reinitialize the chart
+    initChart();
+    
+    console.log('Chart successfully switched to:', chartType);
+    
+  } catch (error) {
+    console.error('Error transforming chart:', error);
+  }
+}
+
+function transformChartType(originalConfig, newType) {
+  // Create a new config based on the original data but with different chart type
+  var newConfig = JSON.parse(JSON.stringify(originalConfig)); // Deep copy
+  
+  // Change the chart type
+  newConfig.type = newType;
+  
+  // Adjust configuration based on chart type
+  if (newType === 'pie') {
+    // Pie chart specific configuration
+    newConfig.options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            padding: 15,
+            boxWidth: 12
+          }
+        }
+      }
+    };
+    
+    // For pie charts, we need different colors for each slice
+    if (newConfig.data && newConfig.data.datasets && newConfig.data.datasets[0]) {
+      var dataCount = newConfig.data.labels.length;
+      var colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#8AC249', '#EA5F89', '#00D1B2', '#958AF7'
+      ];
+      
+      newConfig.data.datasets[0].backgroundColor = colors.slice(0, dataCount);
+      newConfig.data.datasets[0].borderColor = '#fff';
+      newConfig.data.datasets[0].borderWidth = 1;
+    }
+    
+  } else if (newType === 'line') {
+    // Line chart specific configuration
+    newConfig.options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    };
+    
+    // Line chart styling
+    if (newConfig.data && newConfig.data.datasets && newConfig.data.datasets[0]) {
+      newConfig.data.datasets[0].borderColor = '#36a2eb';
+      newConfig.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.1)';
+      newConfig.data.datasets[0].fill = true;
+      newConfig.data.datasets[0].tension = 0.2;
+      newConfig.data.datasets[0].borderWidth = 2;
+      newConfig.data.datasets[0].pointRadius = 3;
+      newConfig.data.datasets[0].pointHoverRadius = 5;
+    }
+    
+  } else {
+    // Bar chart (default) configuration
+    newConfig.options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    };
+    
+    // Bar chart styling
+    if (newConfig.data && newConfig.data.datasets && newConfig.data.datasets[0]) {
+      var dataCount = newConfig.data.labels.length;
+      var colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#8AC249', '#EA5F89', '#00D1B2', '#958AF7'
+      ];
+      
+      newConfig.data.datasets[0].backgroundColor = colors.slice(0, dataCount);
+      newConfig.data.datasets[0].borderWidth = 1;
+    }
+  }
+  
+  return newConfig;
 }
 
 // Initialize when DOM is ready

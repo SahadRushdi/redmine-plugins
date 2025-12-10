@@ -38,7 +38,9 @@ class TimeAnalyticsController < ApplicationController
     @min_daily_hours = calculate_min_daily_hours
 
     # Generate chart data based on grouping
-    @chart_data = generate_chart_data(@time_entries, @grouping, params[:chart_type] || 'bar')
+    chart_type = params[:chart_type] || 'bar'
+    Rails.logger.info "Generating chart with type: #{chart_type}"
+    @chart_data = generate_chart_data(@time_entries, @grouping, chart_type)
 
     # Pagination
     @limit = params[:per_page].present? ? params[:per_page].to_i : 25
@@ -48,7 +50,15 @@ class TimeAnalyticsController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.json { render json: { chart_data: @chart_data, total_hours: @total_hours } }
+      format.json { 
+        # Parse the chart data JSON string back to hash for JSON response
+        chart_data_hash = JSON.parse(@chart_data)
+        render json: { 
+          chart_data: chart_data_hash, 
+          total_hours: @total_hours,
+          chart_type: params[:chart_type] || 'bar'
+        } 
+      }
     end
   end
 
