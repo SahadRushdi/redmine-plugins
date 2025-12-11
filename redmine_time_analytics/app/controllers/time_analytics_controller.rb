@@ -24,8 +24,9 @@ class TimeAnalyticsController < ApplicationController
     # Apply search filter if present
     if params[:search].present?
       search_term = "%#{params[:search]}%"
+      # Use database-agnostic search - ActiveRecord handles case sensitivity based on database
       @time_entries = @time_entries.where(
-        "projects.name ILIKE ? OR issues.subject ILIKE ? OR time_entries.comments ILIKE ?",
+        "LOWER(projects.name) LIKE LOWER(?) OR LOWER(issues.subject) LIKE LOWER(?) OR LOWER(time_entries.comments) LIKE LOWER(?)",
         search_term, search_term, search_term
       )
     end
@@ -84,8 +85,9 @@ class TimeAnalyticsController < ApplicationController
     # Apply search filter if present
     if params[:search].present?
       search_term = "%#{params[:search]}%"
+      # Use database-agnostic search - ActiveRecord handles case sensitivity based on database
       @time_entries = @time_entries.where(
-        "projects.name ILIKE ? OR issues.subject ILIKE ? OR time_entries.comments ILIKE ?",
+        "LOWER(projects.name) LIKE LOWER(?) OR LOWER(issues.subject) LIKE LOWER(?) OR LOWER(time_entries.comments) LIKE LOWER(?)",
         search_term, search_term, search_term
       )
     end
