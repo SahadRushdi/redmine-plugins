@@ -173,15 +173,42 @@ class TimeAnalyticsController < ApplicationController
     # Remove order clause to avoid ambiguity in GROUP BY operations
     base_query = time_entries.reorder(nil)
     
+    # Get database adapter to use appropriate date functions
+    adapter_name = ActiveRecord::Base.connection.adapter_name.downcase
+    
     case grouping
     when 'daily'
       base_query.group(:spent_on).sum(:hours)
     when 'weekly'
-      base_query.group('DATE_TRUNC(\'week\', spent_on)').sum(:hours)
+      if adapter_name.include?('mysql')
+        # MySQL: Group by year and week number
+        base_query.group('YEARWEEK(spent_on, 1)').sum(:hours)
+      elsif adapter_name.include?('postgresql')
+        base_query.group('DATE_TRUNC(\'week\', spent_on)').sum(:hours)
+      else
+        # Fallback for other databases - group by week start date
+        base_query.group("DATE(spent_on - ((STRFTIME('%w', spent_on) + 6) % 7) || ' days')").sum(:hours)
+      end
     when 'monthly'
-      base_query.group('DATE_TRUNC(\'month\', spent_on)').sum(:hours)
+      if adapter_name.include?('mysql')
+        # MySQL: Group by year and month
+        base_query.group('YEAR(spent_on), MONTH(spent_on)').sum(:hours)
+      elsif adapter_name.include?('postgresql')
+        base_query.group('DATE_TRUNC(\'month\', spent_on)').sum(:hours)
+      else
+        # Fallback for other databases
+        base_query.group("DATE(spent_on, 'start of month')").sum(:hours)
+      end
     when 'yearly'
-      base_query.group('DATE_TRUNC(\'year\', spent_on)').sum(:hours)
+      if adapter_name.include?('mysql')
+        # MySQL: Group by year
+        base_query.group('YEAR(spent_on)').sum(:hours)
+      elsif adapter_name.include?('postgresql')
+        base_query.group('DATE_TRUNC(\'year\', spent_on)').sum(:hours)
+      else
+        # Fallback for other databases
+        base_query.group("DATE(spent_on, 'start of year')").sum(:hours)
+      end
     else
       base_query.group(:spent_on).sum(:hours)
     end
@@ -206,17 +233,45 @@ class TimeAnalyticsController < ApplicationController
   end
 
   def format_chart_label(key)
-    return key.to_s unless key.respond_to?(:strftime)
-    
+    # Handle different key formats from database grouping
     case key
     when Date
       key.strftime('%b %d, %Y')
     when Time, DateTime
       key.strftime('%b %d, %Y')
+    when String
+      # Handle MySQL YEARWEEK format for weekly grouping
+      if key.match(/^\d{6}$/)
+        year = key[0..3].to_i
+        week = key[4..5].to_i
+        "Week #{week}, #{year}"
+      else
+        key
+      end
+    when Integer
+      # Handle MySQL year grouping or YEARWEEK
+      if key > 999999 # YEARWEEK format (YYYYWW)
+        year = key / 100
+        week = key % 100
+        "Week #{week}, #{year}"
+      elsif key > 9999 # Just year
+        key.to_s
+      else
+        key.to_s
+      end
+    when Array
+      # Handle MySQL YEAR(spent_on), MONTH(spent_on) grouping for monthly
+      if key.size == 2 && key.all? { |k| k.is_a?(Numeric) }
+        year, month = key
+        Date.new(year, month, 1).strftime('%b %Y')
+      else
+        key.join(', ')
+      end
     else
       key.to_s
     end
-  rescue
+  rescue => e
+    Rails.logger.error "Error formatting chart label for key #{key.inspect}: #{e.message}"
     key.to_s
   end
 

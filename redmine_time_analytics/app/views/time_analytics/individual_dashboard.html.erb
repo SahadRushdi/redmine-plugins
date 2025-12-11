@@ -151,9 +151,8 @@
     <!-- Pagination -->
     <div class="pagination-wrapper">
       <% current_page = params[:page].to_i > 0 ? params[:page].to_i : 1 %>
-      <% permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page).except(:page) %>
-      <% base_url = time_analytics_individual_dashboard_path + "?" + permitted_params.to_param %>
-      <%= pagination_links(current_page, @total_pages, base_url).html_safe %>
+      <% permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page) %>
+      <%= pagination_links(current_page, @total_pages, permitted_params).html_safe %>
       
       <div class="pagination-info">
         <%= l(:text_pagination_info, 

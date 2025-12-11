@@ -81,15 +81,16 @@ module TimeAnalyticsHelper
     end
   end
 
-  def pagination_links(current_page, total_pages, base_url)
+  def pagination_links(current_page, total_pages, base_params)
     return '' if total_pages <= 1
 
     links = []
     
     # Previous link
     if current_page > 1
+      prev_params = base_params.merge(page: current_page - 1)
       links << link_to('‹ ' + l(:label_previous), 
-                       base_url + "?page=#{current_page - 1}", 
+                       time_analytics_individual_dashboard_path(prev_params), 
                        class: 'pagination-link')
     end
     
@@ -101,14 +102,16 @@ module TimeAnalyticsHelper
       if page == current_page
         links << content_tag(:span, page, class: 'pagination-current')
       else
-        links << link_to(page, base_url + "?page=#{page}", class: 'pagination-link')
+        page_params = base_params.merge(page: page)
+        links << link_to(page, time_analytics_individual_dashboard_path(page_params), class: 'pagination-link')
       end
     end
     
     # Next link
     if current_page < total_pages
+      next_params = base_params.merge(page: current_page + 1)
       links << link_to(l(:label_next) + ' ›', 
-                       base_url + "?page=#{current_page + 1}", 
+                       time_analytics_individual_dashboard_path(next_params), 
                        class: 'pagination-link')
     end
     
