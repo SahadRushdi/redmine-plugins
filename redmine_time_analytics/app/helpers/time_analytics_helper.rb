@@ -122,8 +122,12 @@ module TimeAnalyticsHelper
 
       # Use a consistent, clear format for the date range
       "#{display_start.strftime('%m/%d/%Y')} to #{display_end.strftime('%m/%d/%Y')}"
+    elsif grouping == 'monthly'
+      # The key from the controller is now consistently a Date or a 'YYYY-MM-DD' string
+      date = key.is_a?(String) ? Date.parse(key) : key.to_date
+      return date.strftime('%B %Y')
     else
-      # For daily, monthly, yearly, the chart label format is sufficient
+      # For daily, yearly, and any other case, use the old chart label format
       format_chart_label(key)
     end
   end

@@ -50,11 +50,11 @@ class TimeAnalyticsController < ApplicationController
       grouped_data = group_time_entries(@time_entries, @grouping)
       @entry_count = grouped_data.count
 
-      # Sort data for consistent pagination
-      # The key format varies by DB and grouping, so we need a robust sort
+      # Sort by the key (which is the date/period) to ensure chronological order
       sorted_data = grouped_data.sort_by do |key, _|
-        helpers.format_chart_label(key) # Use the existing chart label formatter for a consistent sort key
-      end.reverse # Assuming we want newest first, similar to time entries
+        # The key itself (date, year/month array, etc.) is sortable
+        key
+      end
 
       @paginated_entries = sorted_data.slice(@offset, @limit).map do |period, hours|
         # Use a Struct for easier access in the view, like an object
@@ -212,12 +212,12 @@ class TimeAnalyticsController < ApplicationController
       end
     when 'monthly'
       if adapter_name.include?('mysql')
-        # MySQL: Group by year and month
-        base_query.group('YEAR(spent_on), MONTH(spent_on)').sum(:hours)
+        # MySQL: Group by the first day of the month (YYYY-MM-01)
+        base_query.group("DATE_FORMAT(spent_on, '%Y-%m-01')").sum(:hours)
       elsif adapter_name.include?('postgresql')
         base_query.group('DATE_TRUNC(\'month\', spent_on)').sum(:hours)
       else
-        # Fallback for other databases
+        # Fallback for other databases (SQLite)
         base_query.group("DATE(spent_on, 'start of month')").sum(:hours)
       end
     when 'yearly'
