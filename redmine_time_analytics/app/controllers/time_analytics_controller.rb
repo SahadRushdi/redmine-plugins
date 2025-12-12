@@ -43,10 +43,29 @@ class TimeAnalyticsController < ApplicationController
     Rails.logger.info "Generating chart with type: #{chart_type}"
     @chart_data = generate_chart_data(@time_entries, @grouping, chart_type)
 
-    # Pagination
     @limit = params[:per_page].present? ? params[:per_page].to_i : 25
     @offset = params[:page].present? ? (params[:page].to_i - 1) * @limit : 0
-    @paginated_entries = @time_entries.limit(@limit).offset(@offset)
+
+    if ['weekly', 'monthly', 'yearly'].include?(@grouping)
+      grouped_data = group_time_entries(@time_entries, @grouping)
+      @entry_count = grouped_data.count
+
+      # Sort data for consistent pagination
+      # The key format varies by DB and grouping, so we need a robust sort
+      sorted_data = grouped_data.sort_by do |key, _|
+        helpers.format_chart_label(key) # Use the existing chart label formatter for a consistent sort key
+      end.reverse # Assuming we want newest first, similar to time entries
+
+      @paginated_entries = sorted_data.slice(@offset, @limit).map do |period, hours|
+        # Use a Struct for easier access in the view, like an object
+        Struct.new(:period, :hours).new(helpers.format_period_for_table(period, @grouping, @from, @to), hours)
+      end
+    else # Daily grouping
+      # This is the original logic for daily entries
+      @entry_count = @time_entries.count
+      @paginated_entries = @time_entries.limit(@limit).offset(@offset)
+    end
+    
     @total_pages = (@entry_count.to_f / @limit).ceil
 
     respond_to do |format|
@@ -234,53 +253,10 @@ class TimeAnalyticsController < ApplicationController
     end
   end
 
-  def format_chart_label(key)
-    # Handle different key formats from database grouping
-    case key
-    when Date
-      key.strftime('%b %d, %Y')
-    when Time, DateTime
-      key.strftime('%b %d, %Y')
-    when String
-      # Handle MySQL YEARWEEK format for weekly grouping
-      if key.match(/^\d{6}$/)
-        year = key[0..3].to_i
-        week = key[4..5].to_i
-        "Week #{week}, #{year}"
-      else
-        key
-      end
-    when Integer
-      # Handle MySQL year grouping or YEARWEEK
-      if key > 999999 # YEARWEEK format (YYYYWW)
-        year = key / 100
-        week = key % 100
-        "Week #{week}, #{year}"
-      elsif key > 9999 # Just year
-        key.to_s
-      else
-        key.to_s
-      end
-    when Array
-      # Handle MySQL YEAR(spent_on), MONTH(spent_on) grouping for monthly
-      if key.size == 2 && key.all? { |k| k.is_a?(Numeric) }
-        year, month = key
-        Date.new(year, month, 1).strftime('%b %Y')
-      else
-        key.join(', ')
-      end
-    else
-      key.to_s
-    end
-  rescue => e
-    Rails.logger.error "Error formatting chart label for key #{key.inspect}: #{e.message}"
-    key.to_s
-  end
-
   def generate_pie_chart_data(data_hash)
     return empty_chart_data('pie') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| format_chart_label(key) }
+    formatted_labels = data_hash.keys.map { |key| helpers.format_chart_label(key) }
     
     chart_data = {
       labels: formatted_labels,
@@ -316,7 +292,7 @@ class TimeAnalyticsController < ApplicationController
   def generate_bar_chart_data(data_hash)
     return empty_chart_data('bar') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| format_chart_label(key) }
+    formatted_labels = data_hash.keys.map { |key| helpers.format_chart_label(key) }
     
     chart_data = {
       labels: formatted_labels,
@@ -356,7 +332,7 @@ class TimeAnalyticsController < ApplicationController
 
     # Sort data by date for proper line chart display
     sorted_data = data_hash.sort_by { |key, _| key.is_a?(Date) ? key : Date.parse(key.to_s) rescue Date.current }
-    formatted_labels = sorted_data.map { |key, _| format_chart_label(key) }
+    formatted_labels = sorted_data.map { |key, _| helpers.format_chart_label(key) }
     
     chart_data = {
       labels: formatted_labels,

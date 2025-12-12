@@ -32,6 +32,102 @@ module TimeAnalyticsHelper
     end
   end
 
+  def format_chart_label(key)
+    # Handle different key formats from database grouping
+    case key
+    when Date, Time, DateTime
+      key.strftime('%b %d, %Y')
+    when String
+      # Handle MySQL YEARWEEK format for weekly grouping
+      if key.match?(/^\d{6}$/)
+        year = key[0..3].to_i
+        week = key[4..5].to_i
+        # Date.commercial(year, week, 1) gives Monday. We can use this to represent the week.
+        "Week #{week}, #{year}"
+      else
+        key
+      end
+    when Integer
+      # Handle MySQL year grouping or YEARWEEK
+      if key > 999999 # YEARWEEK format (YYYYWW)
+        year = key / 100
+        week = key % 100
+        "Week #{week}, #{year}"
+      elsif key > 1000 && key < 3000 # Likely a year
+        key.to_s
+      else
+        key.to_s
+      end
+    when Array
+      # Handle MySQL YEAR(spent_on), MONTH(spent_on) grouping for monthly
+      if key.size == 2 && key.all? { |k| k.is_a?(Numeric) }
+        year, month = key
+        Date.new(year, month, 1).strftime('%b %Y')
+      else
+        key.join(', ')
+      end
+    else
+      key.to_s
+    end
+  rescue => e
+    # Log error if something goes wrong
+    Rails.logger.error "Error formatting chart label for key #{key.inspect}: #{e.message}"
+    key.to_s
+  end
+
+  def format_period_for_table(key, grouping, from_date, to_date)
+    # This helper is used to format the 'period' column in the grouped results table.
+    # It provides a more descriptive format for weeks than the chart label.
+    
+    if grouping == 'weekly'
+      date_in_week = nil
+      
+      # Determine a representative date from the database key
+      case key
+      when Date, Time, DateTime
+        # PostgreSQL/SQLite gives a date object (Monday of the week)
+        date_in_week = key.to_date
+      when String
+        # MySQL can give a string like '202540'
+        if key.match?(/^\d{6}$/)
+          year = key[0..3].to_i
+          week_num = key[4..5].to_i
+          # Date.commercial gives the Monday of the ISO week. This is a reliable way to get a date in the correct week.
+          date_in_week = Date.commercial(year, week_num, 1)
+        end
+      when Integer
+        # MySQL can also return YEARWEEK as an integer
+        if key > 100000 && key.to_s.length == 6
+          year = key / 100
+          week_num = key % 100
+          date_in_week = Date.commercial(year, week_num, 1)
+        end
+      when Array
+        # Handle cases like [2025, 10] for monthly, though we're in the weekly block
+        # This is more of a safe fallback
+        date_in_week = Date.new(key[0], key[1], 1) rescue nil
+      end
+
+      # Fallback if key parsing fails
+      return format_chart_label(key) unless date_in_week
+
+      # Assuming weeks start on Sunday for display purposes, as requested.
+      # date.wday is 0 for Sunday, 1 for Monday, etc.
+      start_of_week = date_in_week - date_in_week.wday
+      end_of_week = start_of_week + 6
+
+      # The visible range should not extend beyond the user's selected filter range
+      display_start = [start_of_week, from_date].max
+      display_end = [end_of_week, to_date].min
+
+      # Use a consistent, clear format for the date range
+      "#{display_start.strftime('%m/%d/%Y')} to #{display_end.strftime('%m/%d/%Y')}"
+    else
+      # For daily, monthly, yearly, the chart label format is sufficient
+      format_chart_label(key)
+    end
+  end
+
   def time_filter_options
     [
       [l(:label_today), 'today'],
