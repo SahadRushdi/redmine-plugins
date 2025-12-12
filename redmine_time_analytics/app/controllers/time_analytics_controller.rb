@@ -256,7 +256,7 @@ class TimeAnalyticsController < ApplicationController
   def generate_pie_chart_data(data_hash)
     return empty_chart_data('pie') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| helpers.format_chart_label(key) }
+    formatted_labels = data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
     
     chart_data = {
       labels: formatted_labels,
@@ -292,7 +292,7 @@ class TimeAnalyticsController < ApplicationController
   def generate_bar_chart_data(data_hash)
     return empty_chart_data('bar') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| helpers.format_chart_label(key) }
+    formatted_labels = data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
     
     chart_data = {
       labels: formatted_labels,
@@ -332,7 +332,7 @@ class TimeAnalyticsController < ApplicationController
 
     # Sort data by date for proper line chart display
     sorted_data = data_hash.sort_by { |key, _| key.is_a?(Date) ? key : Date.parse(key.to_s) rescue Date.current }
-    formatted_labels = sorted_data.map { |key, _| helpers.format_chart_label(key) }
+    formatted_labels = sorted_data.map { |key, _| helpers.format_period_for_table(key, @grouping, @from, @to) }
     
     chart_data = {
       labels: formatted_labels,
