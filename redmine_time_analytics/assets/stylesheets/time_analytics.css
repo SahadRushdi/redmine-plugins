@@ -455,4 +455,6 @@
   max-height: 500px; /* Adjust as needed to fit content */
   opacity: 1;
   transition: max-height 0.5s ease-in, opacity 0.5s ease-in;
+  width: 100%;
+  box-sizing: border-box;
 }
