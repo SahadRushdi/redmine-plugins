@@ -1,17 +1,31 @@
 <%= render 'includes' %>
 
 <div class="contextual">
-  <%= link_to l(:label_export_csv), time_analytics_export_csv_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page)), 
+  <%= link_to l(:label_export_csv), time_analytics_export_csv_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page, :view_mode)), 
       method: :post, class: 'icon icon-download' %>
 </div>
 
 <h2><%= l(:label_individual_dashboard) %></h2>
+
+<!-- Toggle View Section -->
+<div class="box toggle-view-section">
+  <h3>Toggle View:</h3>
+  <div class="toggle-buttons">
+    <%= link_to 'Time Entries', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'time_entries', grouping: @grouping)), 
+        class: "button #{'button-active' if @view_mode == 'time_entries'}" %>
+    <%= link_to 'Activity', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'activity')), 
+        class: "button #{'button-active' if @view_mode == 'activity'}" %>
+    <%= link_to 'Grouping', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page, :grouping).merge(view_mode: 'grouping')), 
+        class: "button #{'button-active' if @view_mode == 'grouping'}" %>
+  </div>
+</div>
 
 <!-- Filters Section -->
 <div class="box filter-controls">
   <h3><%= l(:label_filters) %></h3>
   <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, id: 'time-analytics-form' do %>
     <%= hidden_field_tag :chart_type, params[:chart_type] || 'bar' %>
+    <%= hidden_field_tag :view_mode, @view_mode %>
     <div class="filter-row">
       <div class="filter-group">
         <%= label_tag :filter, l(:label_time_period) %>
@@ -97,7 +111,14 @@
 <!-- Results Table -->
 <div class="box">
   <h3>
-    <%= l(:label_time_entries) %>
+    <% case @view_mode %>
+    <% when 'activity' %>
+      Activity Analysis
+    <% when 'grouping' %>
+      <%= l("label_#{@grouping}") %> Analysis
+    <% else %>
+      <%= l(:label_time_entries) %>
+    <% end %>
     <div class="table-controls">
       <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, 
           class: 'pagination-form' do %>
@@ -107,6 +128,7 @@
         <%= hidden_field_tag :grouping, params[:grouping] %>
         <%= hidden_field_tag :search, params[:search] %>
         <%= hidden_field_tag :chart_type, params[:chart_type] %>
+        <%= hidden_field_tag :view_mode, @view_mode %>
         <%= label_tag :per_page, l(:label_per_page) %>
         <%= select_tag :per_page, options_for_select(per_page_options, @limit),
             onchange: 'this.form.submit()' %>
@@ -115,7 +137,56 @@
   </h3>
 
   <% if @paginated_entries.any? %>
-    <% if @grouping == 'daily' %>
+    <% if @view_mode == 'activity' %>
+      <%# Activity analysis table %>
+      <table class="list time-entries-grouped-table">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th class="hours-column">Total Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @paginated_entries.each do |entry| %>
+            <tr>
+              <td><%= entry.period %></td>
+              <td class="hours-column"><%= format_hours(entry.hours) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td><strong><%= l(:label_total) %></strong></td>
+            <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% elsif @view_mode == 'grouping' || ['weekly', 'monthly', 'yearly'].include?(@grouping) %>
+      <%# Grouped table for weekly, monthly, yearly %>
+      <table class="list time-entries-grouped-table">
+        <thead>
+          <tr>
+            <th><%= l("label_#{@grouping}") %></th>
+            <th class="hours-column"><%= l(:label_hours) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @paginated_entries.each do |entry| %>
+            <tr>
+              <td><%= entry.period %></td>
+              <td class="hours-column"><%= format_hours(entry.hours) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td><strong><%= l(:label_total) %></strong></td>
+            <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% else %>
+      <%# Time entries table for daily view %>
       <table class="list time-entries-table">
         <thead>
           <tr>
@@ -148,36 +219,12 @@
           </tr>
         </tfoot>
       </table>
-    <% else %>
-      <%# Grouped table for weekly, monthly, yearly %>
-      <table class="list time-entries-grouped-table">
-        <thead>
-          <tr>
-            <th><%= l("label_#{@grouping}") %></th>
-            <th class="hours-column"><%= l(:label_hours) %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @paginated_entries.each do |entry| %>
-            <tr>
-              <td><%= entry.period %></td>
-              <td class="hours-column"><%= format_hours(entry.hours) %></td>
-            </tr>
-          <% end %>
-        </tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td><strong><%= l(:label_total) %></strong></td>
-            <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
-          </tr>
-        </tfoot>
-      </table>
     <% end %>
 
     <!-- Pagination -->
     <div class="pagination-wrapper">
       <% current_page = params[:page].to_i > 0 ? params[:page].to_i : 1 %>
-      <% permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page) %>
+      <% permitted_params = params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :view_mode) %>
       <%= pagination_links(current_page, @total_pages, permitted_params).html_safe %>
       
       <div class="pagination-info">

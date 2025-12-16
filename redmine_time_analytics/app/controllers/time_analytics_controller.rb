@@ -12,6 +12,7 @@ class TimeAnalyticsController < ApplicationController
 
   def individual_dashboard
     @user = User.current
+    @view_mode = params[:view_mode] || 'time_entries'
     
     # Get time entries for the current user with project visibility check
     @time_entries = TimeEntry.joins(:project)
@@ -38,15 +39,26 @@ class TimeAnalyticsController < ApplicationController
     @max_daily_hours = calculate_max_daily_hours
     @min_daily_hours = calculate_min_daily_hours
 
-    # Generate chart data based on grouping
+    # Generate chart data based on view mode and grouping
     chart_type = params[:chart_type] || 'bar'
-    Rails.logger.info "Generating chart with type: #{chart_type}"
-    @chart_data = generate_chart_data(@time_entries, @grouping, chart_type)
+    Rails.logger.info "Generating chart with type: #{chart_type}, view_mode: #{@view_mode}"
+    @chart_data = generate_chart_data(@time_entries, @grouping, chart_type, @view_mode)
 
     @limit = params[:per_page].present? ? params[:per_page].to_i : 25
     @offset = params[:page].present? ? (params[:page].to_i - 1) * @limit : 0
 
-    if ['weekly', 'monthly', 'yearly'].include?(@grouping)
+    if @view_mode == 'activity'
+      # Group by Activity
+      grouped_data = group_time_entries(@time_entries, 'activity')
+      @entry_count = grouped_data.count
+
+      # Sort by activity name
+      sorted_data = grouped_data.sort_by { |activity_name, _| activity_name || 'No Activity' }
+
+      @paginated_entries = sorted_data.slice(@offset, @limit).map do |activity_name, hours|
+        Struct.new(:period, :hours).new(activity_name || 'No Activity', hours)
+      end
+    elsif ['weekly', 'monthly', 'yearly'].include?(@grouping)
       grouped_data = group_time_entries(@time_entries, @grouping)
       @entry_count = grouped_data.count
 
@@ -94,6 +106,8 @@ class TimeAnalyticsController < ApplicationController
 
   def export_csv
     @user = User.current
+    @view_mode = params[:view_mode] || 'time_entries'
+    
     @time_entries = TimeEntry.joins(:project)
                              .where(user: @user)
                              .where(spent_on: @from..@to)
@@ -111,10 +125,16 @@ class TimeAnalyticsController < ApplicationController
       )
     end
 
-    csv_data = export_time_entries_to_csv(@time_entries)
+    if @view_mode == 'activity'
+      csv_data = export_activity_analysis_to_csv(@time_entries)
+      filename = "time_analytics_activity_#{@user.login}_#{@from}_#{@to}.csv"
+    else
+      csv_data = export_time_entries_to_csv(@time_entries)
+      filename = "time_analytics_#{@user.login}_#{@from}_#{@to}.csv"
+    end
     
     send_data csv_data, 
-              filename: "time_analytics_#{@user.login}_#{@from}_#{@to}.csv",
+              filename: filename,
               type: 'text/csv'
   end
 
@@ -176,17 +196,21 @@ class TimeAnalyticsController < ApplicationController
   end
 
   # Inline Chart Helper methods
-  def generate_chart_data(time_entries, grouping, chart_type)
-    # Group data by the specified grouping
-    grouped_data = group_time_entries(time_entries, grouping)
+  def generate_chart_data(time_entries, grouping, chart_type, view_mode = 'time_entries')
+    # Group data by the specified view mode and grouping
+    if view_mode == 'activity'
+      grouped_data = group_time_entries(time_entries, 'activity')
+    else
+      grouped_data = group_time_entries(time_entries, grouping)
+    end
     
     case chart_type
     when 'pie'
-      generate_pie_chart_data(grouped_data)
+      generate_pie_chart_data(grouped_data, view_mode)
     when 'line'
-      generate_line_chart_data(grouped_data)
+      generate_line_chart_data(grouped_data, view_mode)
     else
-      generate_bar_chart_data(grouped_data)
+      generate_bar_chart_data(grouped_data, view_mode)
     end
   end
 
@@ -198,6 +222,11 @@ class TimeAnalyticsController < ApplicationController
     adapter_name = ActiveRecord::Base.connection.adapter_name.downcase
     
     case grouping
+    when 'activity'
+      # Group by activity name - join with enumerations table to get activity names
+      base_query.joins('LEFT JOIN enumerations ON time_entries.activity_id = enumerations.id')
+                .group('enumerations.name')
+                .sum(:hours)
     when 'daily'
       base_query.group(:spent_on).sum(:hours)
     when 'weekly'
@@ -253,10 +282,14 @@ class TimeAnalyticsController < ApplicationController
     end
   end
 
-  def generate_pie_chart_data(data_hash)
+  def generate_pie_chart_data(data_hash, view_mode = 'time_entries')
     return empty_chart_data('pie') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    formatted_labels = if view_mode == 'activity'
+      data_hash.keys.map { |key| key || 'No Activity' }
+    else
+      data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    end
     
     chart_data = {
       labels: formatted_labels,
@@ -289,10 +322,14 @@ class TimeAnalyticsController < ApplicationController
     }.to_json.html_safe
   end
 
-  def generate_bar_chart_data(data_hash)
+  def generate_bar_chart_data(data_hash, view_mode = 'time_entries')
     return empty_chart_data('bar') if data_hash.empty?
 
-    formatted_labels = data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    formatted_labels = if view_mode == 'activity'
+      data_hash.keys.map { |key| key || 'No Activity' }
+    else
+      data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    end
     
     chart_data = {
       labels: formatted_labels,
@@ -327,12 +364,18 @@ class TimeAnalyticsController < ApplicationController
     }.to_json.html_safe
   end
 
-  def generate_line_chart_data(data_hash)
+  def generate_line_chart_data(data_hash, view_mode = 'time_entries')
     return empty_chart_data('line') if data_hash.empty?
 
-    # Sort data by date for proper line chart display
-    sorted_data = data_hash.sort_by { |key, _| key.is_a?(Date) ? key : Date.parse(key.to_s) rescue Date.current }
-    formatted_labels = sorted_data.map { |key, _| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    if view_mode == 'activity'
+      # For activity view, sort by activity name
+      sorted_data = data_hash.sort_by { |key, _| key || 'No Activity' }
+      formatted_labels = sorted_data.map { |key, _| key || 'No Activity' }
+    else
+      # Sort data by date for proper line chart display
+      sorted_data = data_hash.sort_by { |key, _| key.is_a?(Date) ? key : Date.parse(key.to_s) rescue Date.current }
+      formatted_labels = sorted_data.map { |key, _| helpers.format_period_for_table(key, @grouping, @from, @to) }
+    end
     
     chart_data = {
       labels: formatted_labels,
@@ -418,6 +461,32 @@ class TimeAnalyticsController < ApplicationController
       total_hours = time_entries.map { |entry| entry.hours }.sum
       csv << []
       csv << ['TOTAL', '', '', '', '', sprintf('%.2f', total_hours)]
+    end
+  end
+
+  def export_activity_analysis_to_csv(time_entries)
+    require 'csv'
+    
+    # Group by activity
+    grouped_data = group_time_entries(time_entries, 'activity')
+    
+    CSV.generate(headers: true) do |csv|
+      # Add headers
+      csv << ['Activity', 'Total Hours']
+      
+      # Sort by activity name and add data rows
+      sorted_data = grouped_data.sort_by { |activity_name, _| activity_name || 'No Activity' }
+      sorted_data.each do |activity_name, hours|
+        csv << [
+          activity_name || 'No Activity',
+          sprintf('%.2f', hours)
+        ]
+      end
+      
+      # Add summary row
+      total_hours = grouped_data.values.sum
+      csv << []
+      csv << ['TOTAL', sprintf('%.2f', total_hours)]
     end
   end
 end
