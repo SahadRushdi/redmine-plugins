@@ -177,9 +177,10 @@ class TimeAnalyticsController < ApplicationController
       @from = params[:from].present? ? Date.parse(params[:from]) : (Date.current - 30.days)
       @to = params[:to].present? ? Date.parse(params[:to]) : Date.current
     else
-      # Default to last 30 days
-      @from = Date.current - 30.days
-      @to = Date.current
+      # Default to this week
+      params[:filter] = 'this_week'
+      @from = Date.current.beginning_of_week
+      @to = Date.current.end_of_week
     end
   rescue ArgumentError
     # Handle invalid date format
