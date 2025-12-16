@@ -423,3 +423,36 @@
     font-size: 11px;
   }
 }
+
+/* Collapsible Filter Section */
+.toggle-filters-button {
+  display: inline-block;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-right: 10px;
+  line-height: 0;
+}
+
+.toggle-filters-button:hover {
+  background-color: #f0f0f0;
+}
+
+.toggle-filters-button.active {
+  background-color: #36a2eb;
+  border-color: #36a2eb;
+}
+
+.collapsible-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+  opacity: 0;
+}
+
+.collapsible-section.open {
+  max-height: 500px; /* Adjust as needed to fit content */
+  opacity: 1;
+  transition: max-height 0.5s ease-in, opacity 0.5s ease-in;
+}

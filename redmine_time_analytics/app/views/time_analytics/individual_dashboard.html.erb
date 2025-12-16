@@ -1,64 +1,72 @@
 <%= render 'includes' %>
 
 <div class="contextual">
+  <a href="#" id="toggle-filters-btn" role="button" title="<%= l(:label_filters) %>" class="toggle-filters-button">
+    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" class="filter-icon-svg">
+      <path d="M0 0h24v24H0z" fill="none"/>
+      <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+    </svg>
+  </a>
   <%= link_to l(:label_export_csv), time_analytics_export_csv_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page, :view_mode)), 
       method: :post, class: 'icon icon-download' %>
 </div>
 
 <h2><%= l(:label_individual_dashboard) %></h2>
 
-<!-- Toggle View Section -->
-<div class="box toggle-view-section">
-  <h3>Toggle View:</h3>
-  <div class="toggle-buttons">
-    <%= link_to 'Time Entries', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'time_entries', grouping: @grouping)), 
-        class: "button #{'button-active' if @view_mode == 'time_entries'}" %>
-    <%= link_to 'Activity', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'activity')), 
-        class: "button #{'button-active' if @view_mode == 'activity'}" %>
-    <%= link_to 'Grouping', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page, :grouping).merge(view_mode: 'grouping')), 
-        class: "button #{'button-active' if @view_mode == 'grouping'}" %>
-  </div>
-</div>
-
-<!-- Filters Section -->
-<div class="box filter-controls">
-  <h3><%= l(:label_filters) %></h3>
-  <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, id: 'time-analytics-form' do %>
-    <%= hidden_field_tag :chart_type, params[:chart_type] || 'bar' %>
-    <%= hidden_field_tag :view_mode, @view_mode %>
-    <div class="filter-row">
-      <div class="filter-group">
-        <%= label_tag :filter, l(:label_time_period) %>
-        <%= select_tag :filter, options_for_select(time_filter_options, params[:filter]), 
-            onchange: 'toggleCustomDateRange()', class: 'filter-select' %>
-      </div>
-
-      <div class="filter-group" id="custom-date-range" style="<%= 'display: none;' unless params[:filter] == 'custom' %>">
-        <%= label_tag :from, l(:label_from) %>
-        <%= date_field_tag :from, params[:from] || @from, class: 'date-input' %>
-        <%= label_tag :to, l(:label_to) %>
-        <%= date_field_tag :to, params[:to] || @to, class: 'date-input' %>
-      </div>
-
-      <div class="filter-group">
-        <%= label_tag :grouping, l(:label_grouping) %>
-        <%= select_tag :grouping, options_for_select(grouping_options, @grouping), 
-            class: 'filter-select' %>
-      </div>
-
-      <div class="filter-group">
-        <%= label_tag :search, l(:label_search) %>
-        <%= text_field_tag :search, params[:search], placeholder: l(:text_search_placeholder), 
-            class: 'search-input' %>
-      </div>
-
-      <div class="filter-group">
-        <%= submit_tag l(:button_apply), class: 'button button-small' %>
-        <%= link_to l(:button_clear), time_analytics_individual_dashboard_path, 
-            class: 'button button-small' %>
-      </div>
+<div id="collapsible-filters" class="collapsible-section">
+  <!-- Toggle View Section -->
+  <div class="box toggle-view-section">
+    <h3>Toggle View:</h3>
+    <div class="toggle-buttons">
+      <%= link_to 'Time Entries', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'time_entries', grouping: @grouping)), 
+          class: "button #{'button-active' if @view_mode == 'time_entries'}" %>
+      <%= link_to 'Activity', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'activity')), 
+          class: "button #{'button-active' if @view_mode == 'activity'}" %>
+      <%= link_to 'Grouping', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page, :grouping).merge(view_mode: 'grouping')), 
+          class: "button #{'button-active' if @view_mode == 'grouping'}" %>
     </div>
-  <% end %>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="box filter-controls">
+    <h3><%= l(:label_filters) %></h3>
+    <%= form_tag time_analytics_individual_dashboard_path, method: :get, local: true, id: 'time-analytics-form' do %>
+      <%= hidden_field_tag :chart_type, params[:chart_type] || 'bar' %>
+      <%= hidden_field_tag :view_mode, @view_mode %>
+      <div class="filter-row">
+        <div class="filter-group">
+          <%= label_tag :filter, l(:label_time_period) %>
+          <%= select_tag :filter, options_for_select(time_filter_options, params[:filter]), 
+              onchange: 'toggleCustomDateRange()', class: 'filter-select' %>
+        </div>
+
+        <div class="filter-group" id="custom-date-range" style="<%= 'display: none;' unless params[:filter] == 'custom' %>">
+          <%= label_tag :from, l(:label_from) %>
+          <%= date_field_tag :from, params[:from] || @from, class: 'date-input' %>
+          <%= label_tag :to, l(:label_to) %>
+          <%= date_field_tag :to, params[:to] || @to, class: 'date-input' %>
+        </div>
+
+        <div class="filter-group">
+          <%= label_tag :grouping, l(:label_grouping) %>
+          <%= select_tag :grouping, options_for_select(grouping_options, @grouping), 
+              class: 'filter-select' %>
+        </div>
+
+        <div class="filter-group">
+          <%= label_tag :search, l(:label_search) %>
+          <%= text_field_tag :search, params[:search], placeholder: l(:text_search_placeholder), 
+              class: 'search-input' %>
+        </div>
+
+        <div class="filter-group">
+          <%= submit_tag l(:button_apply), class: 'button button-small' %>
+          <%= link_to l(:button_clear), time_analytics_individual_dashboard_path, 
+              class: 'button button-small' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
 </div>
 
 <!-- Statistics Summary -->

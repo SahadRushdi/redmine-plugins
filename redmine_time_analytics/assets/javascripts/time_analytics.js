@@ -95,4 +95,22 @@ function updateChart() {
 document.addEventListener('DOMContentLoaded', function() {
   toggleCustomDateRange();
   initChart();
+
+  var toggleBtn = document.getElementById('toggle-filters-btn');
+  var collapsibleSection = document.getElementById('collapsible-filters');
+
+  if (toggleBtn && collapsibleSection) {
+    toggleBtn.addEventListener('click', function(event) {
+      event.stopPropagation();
+      var isOpen = collapsibleSection.classList.toggle('open');
+      toggleBtn.classList.toggle('active', isOpen);
+    });
+  }
+
+  document.addEventListener('click', function(event) {
+    if (collapsibleSection.classList.contains('open') && !collapsibleSection.contains(event.target) && !toggleBtn.contains(event.target)) {
+      collapsibleSection.classList.remove('open');
+      toggleBtn.classList.remove('active');
+    }
+  });
 });
