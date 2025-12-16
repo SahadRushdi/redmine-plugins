@@ -136,31 +136,85 @@
     </div>
   </h3>
 
-  <% if @paginated_entries.any? %>
+  <% # Check for data based on view mode and grouping %>
+  <% has_data = if @view_mode == 'activity' && ['weekly', 'monthly', 'yearly'].include?(@grouping)
+       @paginated_periods&.any?
+     else
+       @paginated_entries&.any?
+     end %>
+  
+  <% if has_data %>
     <% if @view_mode == 'activity' %>
-      <%# Activity analysis table %>
-      <table class="list time-entries-grouped-table">
-        <thead>
-          <tr>
-            <th>Activity</th>
-            <th class="hours-column">Total Hours</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @paginated_entries.each do |entry| %>
+      <% if ['weekly', 'monthly', 'yearly'].include?(@grouping) %>
+        <%# Activity pivot table for cross-tabulation (Activity × Time Period matrix) %>
+        <div class="pivot-table-wrapper">
+          <table class="list pivot-table">
+            <thead>
+              <tr>
+                <th class="period-header"><%= l("label_#{@grouping}") %></th>
+                <% @activities.each do |activity| %>
+                  <th class="activity-header"><%= activity %></th>
+                <% end %>
+                <th class="total-header">Grand Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @paginated_periods.each_with_index do |period_display, index| %>
+                <% period_key = @activity_pivot_data[:raw_periods][(@offset + index)] %>
+                <tr>
+                  <td class="period-cell"><%= period_display %></td>
+                  <% @activities.each do |activity| %>
+                    <td class="hours-cell">
+                      <% hours = @matrix_data[period_key][activity] || 0 %>
+                      <%= hours > 0 ? format_hours(hours) : '-' %>
+                    </td>
+                  <% end %>
+                  <td class="total-cell">
+                    <%= format_hours(@period_totals[period_key] || 0) %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="period-cell"><strong>Grand Total</strong></td>
+                <% @activities.each do |activity| %>
+                  <td class="total-cell">
+                    <strong><%= format_hours(@activity_totals[activity] || 0) %></strong>
+                  </td>
+                <% end %>
+                <td class="grand-total-cell">
+                  <strong><%= format_hours(@grand_total || 0) %></strong>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      <% else %>
+        <%# Simple activity analysis table for daily grouping %>
+        <table class="list time-entries-grouped-table">
+          <thead>
             <tr>
-              <td><%= entry.period %></td>
-              <td class="hours-column"><%= format_hours(entry.hours) %></td>
+              <th>Activity</th>
+              <th class="hours-column">Total Hours</th>
             </tr>
-          <% end %>
-        </tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td><strong><%= l(:label_total) %></strong></td>
-            <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            <% @paginated_entries.each do |entry| %>
+              <tr>
+                <td><%= entry.period %></td>
+                <td class="hours-column"><%= format_hours(entry.hours) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td><strong><%= l(:label_total) %></strong></td>
+              <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      <% end %>
     <% elsif @view_mode == 'grouping' || ['weekly', 'monthly', 'yearly'].include?(@grouping) %>
       <%# Grouped table for weekly, monthly, yearly %>
       <table class="list time-entries-grouped-table">

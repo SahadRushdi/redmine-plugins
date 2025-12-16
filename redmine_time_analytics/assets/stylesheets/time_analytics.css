@@ -143,10 +143,95 @@
 }
 
 /* Table */
-.time-entries-table {
+.time-entries-table,
+.pivot-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 15px;
+}
+
+/* Pivot Table Specific Styles */
+.pivot-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.pivot-table {
+  min-width: 800px;
+  border: 1px solid #ddd;
+}
+
+.pivot-table th.period-header {
+  background-color: #e8f4f8;
+  font-weight: bold;
+  min-width: 120px;
+  text-align: left;
+}
+
+.pivot-table th.activity-header {
+  background-color: #f0f8e8;
+  font-weight: bold;
+  min-width: 80px;
+  text-align: center;
+  transform: rotate(-45deg);
+  transform-origin: center center;
+  height: 60px;
+  vertical-align: bottom;
+  font-size: 11px;
+  padding: 2px;
+}
+
+.pivot-table th.total-header {
+  background-color: #fff2cc;
+  font-weight: bold;
+  min-width: 80px;
+  text-align: center;
+}
+
+.pivot-table .period-cell {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  padding: 8px;
+  border-right: 2px solid #ddd;
+}
+
+.pivot-table .hours-cell {
+  text-align: right;
+  padding: 6px 8px;
+  font-family: monospace;
+  border-left: 1px solid #eee;
+  border-right: 1px solid #eee;
+}
+
+.pivot-table .total-cell {
+  text-align: right;
+  padding: 6px 8px;
+  font-family: monospace;
+  background-color: #f5f5f5;
+  border-left: 2px solid #ddd;
+}
+
+.pivot-table .grand-total-cell {
+  text-align: right;
+  padding: 6px 8px;
+  font-family: monospace;
+  background-color: #ffe6cc;
+  border-left: 2px solid #ff9900;
+  font-weight: bold;
+}
+
+.pivot-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.pivot-table .total-row {
+  background-color: #f0f0f0;
+  border-top: 2px solid #ddd;
+}
+
+.pivot-table .total-row td {
+  font-weight: bold;
+  border-bottom: none;
 }
 
 .time-entries-table th {
@@ -322,5 +407,19 @@
 
   .time-entries-table .issue-column {
     display: none;
+  }
+  
+  /* Pivot table responsive adjustments */
+  .pivot-table th.activity-header {
+    transform: none;
+    height: auto;
+    font-size: 10px;
+    padding: 4px 2px;
+  }
+  
+  .pivot-table .hours-cell,
+  .pivot-table .total-cell {
+    padding: 4px;
+    font-size: 11px;
   }
 }

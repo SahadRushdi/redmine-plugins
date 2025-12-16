@@ -39,24 +39,34 @@ class TimeAnalyticsController < ApplicationController
     @max_daily_hours = calculate_max_daily_hours
     @min_daily_hours = calculate_min_daily_hours
 
-    # Generate chart data based on view mode and grouping
-    chart_type = params[:chart_type] || 'bar'
-    Rails.logger.info "Generating chart with type: #{chart_type}, view_mode: #{@view_mode}"
-    @chart_data = generate_chart_data(@time_entries, @grouping, chart_type, @view_mode)
-
     @limit = params[:per_page].present? ? params[:per_page].to_i : 25
     @offset = params[:page].present? ? (params[:page].to_i - 1) * @limit : 0
 
     if @view_mode == 'activity'
-      # Group by Activity
-      grouped_data = group_time_entries(@time_entries, 'activity')
-      @entry_count = grouped_data.count
+      if ['weekly', 'monthly', 'yearly'].include?(@grouping)
+        # Generate Activity × Time Period pivot table
+        @activity_pivot_data = generate_activity_pivot_table(@time_entries, @grouping)
+        @time_periods = @activity_pivot_data[:periods]
+        @activities = @activity_pivot_data[:activities]
+        @matrix_data = @activity_pivot_data[:matrix]
+        @period_totals = @activity_pivot_data[:period_totals]
+        @activity_totals = @activity_pivot_data[:activity_totals]
+        @grand_total = @activity_pivot_data[:grand_total]
+        
+        # For pagination, use periods count
+        @entry_count = @time_periods.count
+        @paginated_periods = @time_periods.slice(@offset, @limit)
+      else
+        # Daily grouping - show simple activity totals
+        grouped_data = group_time_entries(@time_entries, 'activity')
+        @entry_count = grouped_data.count
 
-      # Sort by activity name
-      sorted_data = grouped_data.sort_by { |activity_name, _| activity_name || 'No Activity' }
+        # Sort by activity name
+        sorted_data = grouped_data.sort_by { |activity_name, _| activity_name || 'No Activity' }
 
-      @paginated_entries = sorted_data.slice(@offset, @limit).map do |activity_name, hours|
-        Struct.new(:period, :hours).new(activity_name || 'No Activity', hours)
+        @paginated_entries = sorted_data.slice(@offset, @limit).map do |activity_name, hours|
+          Struct.new(:period, :hours).new(activity_name || 'No Activity', hours)
+        end
       end
     elsif ['weekly', 'monthly', 'yearly'].include?(@grouping)
       grouped_data = group_time_entries(@time_entries, @grouping)
@@ -76,6 +86,16 @@ class TimeAnalyticsController < ApplicationController
       # This is the original logic for daily entries
       @entry_count = @time_entries.count
       @paginated_entries = @time_entries.limit(@limit).offset(@offset)
+    end
+
+    # Generate chart data based on prepared data
+    chart_type = params[:chart_type] || 'bar'
+    Rails.logger.info "Generating chart with type: #{chart_type}, view_mode: #{@view_mode}, grouping: #{@grouping}"
+    
+    if @view_mode == 'activity' && ['weekly', 'monthly', 'yearly'].include?(@grouping) && defined?(@activity_pivot_data)
+      @chart_data = generate_activity_pivot_chart_data(@activity_pivot_data, chart_type)
+    else
+      @chart_data = generate_chart_data(@time_entries, @grouping, chart_type, @view_mode)
     end
     
     @total_pages = (@entry_count.to_f / @limit).ceil
@@ -488,5 +508,212 @@ class TimeAnalyticsController < ApplicationController
       csv << []
       csv << ['TOTAL', sprintf('%.2f', total_hours)]
     end
+  end
+
+  def generate_activity_pivot_table(time_entries, grouping)
+    Rails.logger.info "Generating activity pivot table for grouping: #{grouping}, entries count: #{time_entries.count}"
+    
+    # Get all time entries with their details
+    entries_with_details = time_entries.includes(:activity).map do |entry|
+      period_key = get_activity_period_key(entry.spent_on, grouping)
+      activity_name = entry.activity&.name || 'No Activity'
+      {
+        period_key: period_key,
+        activity_name: activity_name,
+        hours: entry.hours
+      }
+    end
+    
+    # Get unique periods and activities
+    periods = entries_with_details.map { |e| e[:period_key] }.uniq.sort
+    activities = entries_with_details.map { |e| e[:activity_name] }.uniq.sort
+    
+    # Initialize matrix with zeros
+    matrix_data = {}
+    periods.each { |period| matrix_data[period] = {} }
+    
+    # Populate matrix data
+    entries_with_details.each do |entry|
+      period = entry[:period_key]
+      activity = entry[:activity_name]
+      matrix_data[period][activity] ||= 0
+      matrix_data[period][activity] += entry[:hours]
+    end
+    
+    # Calculate totals
+    period_totals = {}
+    activity_totals = {}
+    grand_total = 0
+    
+    periods.each do |period|
+      period_totals[period] = activities.sum { |activity| matrix_data[period][activity] || 0 }
+      grand_total += period_totals[period]
+    end
+    
+    activities.each do |activity|
+      activity_totals[activity] = periods.sum { |period| matrix_data[period][activity] || 0 }
+    end
+    
+    {
+      periods: periods.map { |p| format_activity_period_display(p, grouping) },
+      activities: activities,
+      matrix: matrix_data,
+      period_totals: period_totals,
+      activity_totals: activity_totals,
+      grand_total: grand_total,
+      raw_periods: periods # Keep original keys for matrix lookup
+    }
+  end
+
+  def get_activity_period_key(date, grouping)
+    case grouping
+    when 'weekly'
+      # Use the start of the week (Monday) as key
+      start_of_week = date.beginning_of_week
+      start_of_week
+    when 'monthly'
+      # Use first day of month as key
+      Date.new(date.year, date.month, 1)
+    when 'yearly'
+      # Use first day of year as key
+      Date.new(date.year, 1, 1)
+    else
+      date
+    end
+  end
+
+  def format_activity_period_display(period_key, grouping)
+    case grouping
+    when 'weekly'
+      start_date = period_key
+      end_date = start_date.end_of_week
+      "#{start_date.strftime('%m/%d/%Y')} to #{end_date.strftime('%m/%d/%Y')}"
+    when 'monthly'
+      period_key.strftime('%B %Y') # "October 2025"
+    when 'yearly'
+      period_key.strftime('%Y')
+    else
+      period_key.strftime('%Y-%m-%d')
+    end
+  end
+
+  def generate_activity_pivot_chart_data(pivot_data, chart_type)
+    # Use period totals for chart data
+    labels = pivot_data[:periods]
+    data_values = pivot_data[:raw_periods].map { |period| pivot_data[:period_totals][period] || 0 }
+    
+    case chart_type
+    when 'pie'
+      generate_pie_chart_from_data(labels, data_values)
+    when 'line'
+      generate_line_chart_from_data(labels, data_values)
+    else
+      generate_bar_chart_from_data(labels, data_values)
+    end
+  end
+
+  def generate_bar_chart_from_data(labels, data_values)
+    chart_data = {
+      labels: labels,
+      datasets: [{
+        label: 'Hours',
+        data: data_values,
+        backgroundColor: generate_colors(labels.size),
+        borderWidth: 1
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+
+    {
+      type: 'bar',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
+  end
+
+  def generate_line_chart_from_data(labels, data_values)
+    chart_data = {
+      labels: labels,
+      datasets: [{
+        label: 'Hours',
+        data: data_values,
+        borderColor: '#36a2eb',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        fill: true,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+
+    {
+      type: 'line',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
+  end
+
+  def generate_pie_chart_from_data(labels, data_values)
+    chart_data = {
+      labels: labels,
+      datasets: [{
+        data: data_values,
+        backgroundColor: generate_colors(labels.size),
+        borderWidth: 1,
+        borderColor: '#fff'
+      }]
+    }
+
+    chart_options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            padding: 15,
+            boxWidth: 12
+          }
+        }
+      }
+    }
+
+    {
+      type: 'pie',
+      data: chart_data,
+      options: chart_options
+    }.to_json.html_safe
   end
 end
