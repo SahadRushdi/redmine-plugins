@@ -100,18 +100,26 @@
 /* Analytics Section - Side by Side Layout */
 .analytics-section {
   display: flex;
-  gap: 20px;
+  gap: 15px; /* Slightly smaller gap */
   margin-bottom: 20px;
+  width: 100%; /* Ensure section uses full available width */
 }
 
 .analytics-section .stats-summary {
-  flex: 0 0 300px; /* Fixed width for summary to make it compact */
+  flex: 0 0 280px; /* Slightly smaller fixed width for summary */
   min-width: 0;
 }
 
 .analytics-section .visualization-section {
-  flex: 1; /* Takes remaining space for chart */
+  flex: 2; /* Give more weight to chart section */
   min-width: 0;
+  width: 100%; /* Force full width usage */
+}
+
+/* Force visualization section to expand and fill available space */
+.analytics-section .visualization-section.box {
+  flex-grow: 2;
+  max-width: none;
 }
 
 /* Stats Summary - 2x2 Grid Layout */
@@ -158,6 +166,8 @@
   position: relative;
   height: 320px; /* Reduced height to eliminate empty space */
   margin: 10px 0 5px; /* Reduced bottom margin */
+  width: 100%; /* Ensure chart uses full width */
+  min-width: 0;
 }
 
 /* Table */
@@ -488,6 +498,4 @@
   max-height: 500px; /* Adjust as needed to fit content */
   opacity: 1;
   transition: max-height 0.5s ease-in, opacity 0.5s ease-in;
-  width: 100%;
-  box-sizing: border-box;
 }
