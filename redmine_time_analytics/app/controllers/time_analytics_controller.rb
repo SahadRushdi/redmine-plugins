@@ -569,8 +569,8 @@ class TimeAnalyticsController < ApplicationController
   def get_activity_period_key(date, grouping)
     case grouping
     when 'weekly'
-      # Use the start of the week (Monday) as key
-      start_of_week = date.beginning_of_week
+      # Use Sunday-based week start to match Time Entries format
+      start_of_week = date - date.wday  # Sunday = 0, so this gives Sunday
       start_of_week
     when 'monthly'
       # Use first day of month as key
@@ -586,9 +586,8 @@ class TimeAnalyticsController < ApplicationController
   def format_activity_period_display(period_key, grouping)
     case grouping
     when 'weekly'
-      start_date = period_key
-      end_date = start_date.end_of_week
-      "#{start_date.strftime('%m/%d/%Y')} to #{end_date.strftime('%m/%d/%Y')}"
+      # Reuse the same logic as Time Entries section for consistency
+      helpers.format_period_for_table(period_key, grouping, @from, @to)
     when 'monthly'
       period_key.strftime('%B %Y') # "October 2025"
     when 'yearly'
