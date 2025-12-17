@@ -69,52 +69,55 @@
   </div>
 </div>
 
-<!-- Statistics Summary -->
-<div class="box stats-summary">
-  <h3><%= l(:label_summary) %></h3>
-  <div class="summary-grid">
-    <div class="summary-item">
-      <div class="summary-value"><%= format_hours(@total_hours) %></div>
-      <div class="summary-label"><%= l(:label_total_hours) %></div>
+<!-- Dashboard Analytics Section - Summary and Visualization Side by Side -->
+<div class="analytics-section">
+  <!-- Statistics Summary -->
+  <div class="box stats-summary">
+    <h3><%= l(:label_summary) %></h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-value"><%= format_hours(@total_hours) %></div>
+        <div class="summary-label"><%= l(:label_total_hours) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value"><%= @entry_count %></div>
+        <div class="summary-label"><%= l(:label_entries_count) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value"><%= format_hours(@avg_hours_per_day) %></div>
+        <div class="summary-label"><%= l(:label_avg_per_day) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value"><%= format_hours(@max_daily_hours) %></div>
+        <div class="summary-label"><%= l(:label_max_daily) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value"><%= format_hours(@min_daily_hours) %></div>
+        <div class="summary-label"><%= l(:label_min_daily) %></div>
+      </div>
     </div>
-    <div class="summary-item">
-      <div class="summary-value"><%= @entry_count %></div>
-      <div class="summary-label"><%= l(:label_entries_count) %></div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-value"><%= format_hours(@avg_hours_per_day) %></div>
-      <div class="summary-label"><%= l(:label_avg_per_day) %></div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-value"><%= format_hours(@max_daily_hours) %></div>
-      <div class="summary-label"><%= l(:label_max_daily) %></div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-value"><%= format_hours(@min_daily_hours) %></div>
-      <div class="summary-label"><%= l(:label_min_daily) %></div>
+  </div>
+
+  <!-- Visualization Section -->
+  <div class="box visualization-section">
+    <h3>
+      <%= l(:label_visualization) %>
+      <div class="visualization-controls">
+        <%= select_tag 'chart_type_select', options_for_select(chart_type_options, params[:chart_type] || 'bar'),
+            onchange: 'updateChart()', class: 'chart-type-select', id: 'chart_type_select' %>
+        <button type="button" onclick="toggleVisualization()" class="button button-small" id="toggle-chart-btn">
+          Hide Chart
+        </button>
+      </div>
+    </h3>
+    
+    <div id="chart-container" style="display: block;">
+      <div class="chart-wrapper">
+        <canvas id="time-chart" class="chart" data-chart='<%= @chart_data %>'></canvas>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- Visualization Section -->
-<div class="box">
-  <h3>
-    <%= l(:label_visualization) %>
-    <div class="visualization-controls">
-      <%= select_tag 'chart_type_select', options_for_select(chart_type_options, params[:chart_type] || 'bar'),
-          onchange: 'updateChart()', class: 'chart-type-select', id: 'chart_type_select' %>
-      <button type="button" onclick="toggleVisualization()" class="button button-small" id="toggle-chart-btn">
-        Hide Chart
-      </button>
-    </div>
-  </h3>
-  
-  <div id="chart-container" style="display: block;">
-    <div class="chart-wrapper">
-      <canvas id="time-chart" class="chart" data-chart='<%= @chart_data %>'></canvas>
-    </div>
-  </div>
-</div></div>
 
 <!-- Results Table -->
 <div class="box">
