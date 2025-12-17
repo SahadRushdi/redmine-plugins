@@ -1,7 +1,6 @@
-/* Time Analytics Plugin - Simplified Styles */
-
-/* Toggle View Section */
-.toggle-view-section {
+/* === Layout Sections === */
+.toggle-view-section,
+.filter-controls {
   background-color: #f9f9f9;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -15,6 +14,7 @@
   font-weight: bold;
 }
 
+/* === Buttons === */
 .toggle-buttons {
   display: flex;
   gap: 10px;
@@ -48,7 +48,7 @@
   border-color: #2e8bc9;
 }
 
-/* Form Controls */
+/* === Form Controls === */
 .filter-select,
 .date-input,
 .search-input,
@@ -56,12 +56,12 @@
 .pagination-form select {
   box-sizing: border-box;
   font-size: 13px;
-  line-height: 1.4;       /* ensure enough text height */
-  height: auto;           /* avoid fixed height clipping */
-  padding: 8px 10px;      /* slightly larger padding for visibility */
+  line-height: 1.4;
+  height: auto;
+  padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 3px;
-  overflow: visible;      /* prevent clipping in some browsers */
+  overflow: visible;
   background-clip: padding-box;
 }
 
@@ -69,15 +69,7 @@
   min-width: 220px;
 }
 
-/* Filter Section */
-.filter-controls {
-  background-color: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 20px;
-}
-
+/* === Filter Section === */
 .filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -97,35 +89,32 @@
   font-size: 12px;
 }
 
-/* Analytics Section - Side by Side Layout */
+/* === Analytics Section === */
 .analytics-section {
   display: flex;
-  gap: 15px; /* Slightly smaller gap */
+  gap: 15px;
   margin-bottom: 20px;
-  width: 100%; /* Ensure section uses full available width */
+  width: 100%;
 }
 
 .analytics-section .stats-summary {
-  flex: 0 0 280px; /* Slightly smaller fixed width for summary */
+  flex: 0 0 280px;
   min-width: 0;
 }
 
-.analytics-section .visualization-section {
-  flex: 2; /* Give more weight to chart section */
-  min-width: 0;
-  width: 100%; /* Force full width usage */
-}
-
-/* Force visualization section to expand and fill available space */
+.analytics-section .visualization-section,
 .analytics-section .visualization-section.box {
+  flex: 2;
   flex-grow: 2;
+  min-width: 0;
+  width: 100%;
   max-width: none;
 }
 
-/* Stats Summary - 2x2 Grid Layout */
+/* === Stats Summary Grid === */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Exactly 2 columns */
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin: 10px 0 15px;
 }
@@ -153,7 +142,7 @@
   line-height: 1.1;
 }
 
-/* Chart */
+/* === Chart === */
 .visualization-controls,
 .table-controls {
   float: right;
@@ -164,13 +153,13 @@
 
 .chart-wrapper {
   position: relative;
-  height: 320px; /* Reduced height to eliminate empty space */
-  margin: 10px 0 5px; /* Reduced bottom margin */
-  width: 100%; /* Ensure chart uses full width */
+  height: 320px;
+  margin: 10px 0 5px;
+  width: 100%;
   min-width: 0;
 }
 
-/* Table */
+/* === Tables === */
 .time-entries-table,
 .pivot-table {
   width: 100%;
@@ -178,7 +167,6 @@
   margin-bottom: 15px;
 }
 
-/* Pivot Table Specific Styles */
 .pivot-table-wrapper {
   overflow-x: auto;
   margin-bottom: 20px;
@@ -189,86 +177,74 @@
   border: 1px solid #ddd;
 }
 
+/* Table Headers */
+.pivot-table th.period-header,
+.pivot-table th.activity-header,
+.pivot-table th.total-header,
+.time-entries-table th {
+  font-weight: bold;
+  padding: 10px 8px;
+  border-bottom: 2px solid #ddd;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
 .pivot-table th.period-header {
   background-color: #e8f4f8;
-  font-weight: bold;
   min-width: 120px;
   text-align: left;
 }
 
 .pivot-table th.activity-header {
   background-color: #f0f8e8;
-  font-weight: bold;
-  min-width: 80px;
+  min-width: 100px;
   text-align: center;
-  transform: rotate(-45deg);
-  transform-origin: center center;
-  height: 60px;
-  vertical-align: bottom;
-  font-size: 11px;
-  padding: 2px;
+  white-space: nowrap;
 }
 
 .pivot-table th.total-header {
   background-color: #fff2cc;
-  font-weight: bold;
-  min-width: 80px;
+  min-width: 100px;
   text-align: center;
 }
 
+.time-entries-table th {
+  background-color: #f1f1f1;
+  text-align: left;
+  padding: 8px;
+}
+
+/* Table Cells */
 .pivot-table .period-cell {
   background-color: #f9f9f9;
   font-weight: bold;
   padding: 8px;
   border-right: 2px solid #ddd;
+  white-space: nowrap;
 }
 
-.pivot-table .hours-cell {
+.pivot-table .hours-cell,
+.pivot-table .total-cell,
+.pivot-table .grand-total-cell {
   text-align: right;
   padding: 6px 8px;
   font-family: monospace;
+}
+
+.pivot-table .hours-cell {
   border-left: 1px solid #eee;
   border-right: 1px solid #eee;
 }
 
 .pivot-table .total-cell {
-  text-align: right;
-  padding: 6px 8px;
-  font-family: monospace;
   background-color: #f5f5f5;
   border-left: 2px solid #ddd;
 }
 
 .pivot-table .grand-total-cell {
-  text-align: right;
-  padding: 6px 8px;
-  font-family: monospace;
   background-color: #ffe6cc;
   border-left: 2px solid #ff9900;
   font-weight: bold;
-}
-
-.pivot-table tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-.pivot-table .total-row {
-  background-color: #f0f0f0;
-  border-top: 2px solid #ddd;
-}
-
-.pivot-table .total-row td {
-  font-weight: bold;
-  border-bottom: none;
-}
-
-.time-entries-table th {
-  background-color: #f1f1f1;
-  padding: 8px;
-  text-align: left;
-  border-bottom: 2px solid #ddd;
-  font-weight: bold;
-  font-size: 12px;
 }
 
 .time-entries-table td {
@@ -277,21 +253,29 @@
   vertical-align: top;
 }
 
+.pivot-table tr:nth-child(even),
+.time-entries-table tr:hover {
+  background-color: #fafafa;
+}
+
 .time-entries-table tr:hover {
   background-color: #f9f9f9;
 }
 
+/* Total Rows */
+.pivot-table .total-row,
 .time-entries-table .total-row {
   background-color: #f0f0f0;
   border-top: 2px solid #ddd;
 }
 
+.pivot-table .total-row td,
 .time-entries-table .total-row td {
   font-weight: bold;
   border-bottom: none;
 }
 
-/* Column Widths */
+/* === Column Widths === */
 .date-column { width: 100px; white-space: nowrap; }
 .project-column { width: 150px; }
 .activity-column { width: 120px; }
@@ -299,7 +283,7 @@
 .comment-column { max-width: 250px; word-wrap: break-word; }
 .hours-column { width: 80px; text-align: right; font-family: monospace; }
 
-/* Links */
+/* === Links === */
 .project-link,
 .issue-link {
   color: #628db6;
@@ -316,7 +300,7 @@
   font-style: italic;
 }
 
-/* Pagination */
+/* === Pagination === */
 .pagination-wrapper {
   display: flex;
   justify-content: space-between;
@@ -332,14 +316,18 @@
   gap: 5px;
 }
 
-.pagination-link {
+.pagination-link,
+.pagination-current {
   padding: 6px 10px;
   border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.pagination-link {
   background-color: #fff;
   color: #628db6;
   text-decoration: none;
-  border-radius: 3px;
-  font-size: 12px;
 }
 
 .pagination-link:hover {
@@ -347,12 +335,9 @@
 }
 
 .pagination-current {
-  padding: 6px 10px;
-  border: 1px solid #628db6;
+  border-color: #628db6;
   background-color: #628db6;
   color: white;
-  border-radius: 3px;
-  font-size: 12px;
   font-weight: bold;
 }
 
@@ -362,7 +347,7 @@
   color: #666;
 }
 
-/* Messages */
+/* === Messages === */
 .error-message {
   background-color: #ffebee;
   color: #c62828;
@@ -387,7 +372,40 @@
   padding: 20px;
 }
 
-/* Responsive */
+/* === Collapsible Filters === */
+.toggle-filters-button {
+  display: inline-block;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-right: 10px;
+  line-height: 0;
+}
+
+.toggle-filters-button:hover {
+  background-color: #f0f0f0;
+}
+
+.toggle-filters-button.active {
+  background-color: #36a2eb;
+  border-color: #36a2eb;
+}
+
+.collapsible-section {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+}
+
+.collapsible-section.open {
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 0.5s ease-in, opacity 0.5s ease-in;
+}
+
+/* === Responsive === */
 @media (max-width: 768px) {
   .filter-row {
     flex-direction: column;
@@ -402,18 +420,12 @@
     min-width: 0;
   }
 
-  /* Stack analytics sections on mobile */
   .analytics-section {
     flex-direction: column;
-    gap: 15px;
   }
 
   .analytics-section .stats-summary {
-    flex: none; /* Remove fixed width on mobile */
-  }
-
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr); /* Keep 2x2 grid on mobile */
+    flex: none;
   }
 
   .visualization-controls,
@@ -447,17 +459,14 @@
     display: none;
   }
   
-  /* Adjust chart height for very small screens */
   .chart-wrapper {
     height: 250px;
   }
   
-  /* Pivot table responsive adjustments */
   .pivot-table th.activity-header {
-    transform: none;
-    height: auto;
-    font-size: 10px;
-    padding: 4px 2px;
+    font-size: 11px;
+    padding: 8px 4px;
+    min-width: 80px;
   }
   
   .pivot-table .hours-cell,
@@ -465,37 +474,4 @@
     padding: 4px;
     font-size: 11px;
   }
-}
-
-/* Collapsible Filter Section */
-.toggle-filters-button {
-  display: inline-block;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-right: 10px;
-  line-height: 0;
-}
-
-.toggle-filters-button:hover {
-  background-color: #f0f0f0;
-}
-
-.toggle-filters-button.active {
-  background-color: #36a2eb;
-  border-color: #36a2eb;
-}
-
-.collapsible-section {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
-  opacity: 0;
-}
-
-.collapsible-section.open {
-  max-height: 500px; /* Adjust as needed to fit content */
-  opacity: 1;
-  transition: max-height 0.5s ease-in, opacity 0.5s ease-in;
 }
