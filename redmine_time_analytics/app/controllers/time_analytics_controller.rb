@@ -312,6 +312,9 @@ class TimeAnalyticsController < ApplicationController
       data_hash.keys.map { |key| helpers.format_period_for_table(key, @grouping, @from, @to) }
     end
     
+    # Calculate total for percentage calculation in JavaScript
+    total_hours = data_hash.values.sum
+    
     chart_data = {
       labels: formatted_labels,
       datasets: [{
@@ -333,7 +336,9 @@ class TimeAnalyticsController < ApplicationController
             boxWidth: 12
           }
         }
-      }
+      },
+      # Add total hours for percentage calculation in JavaScript
+      total_hours: total_hours
     }
 
     {
@@ -686,6 +691,9 @@ class TimeAnalyticsController < ApplicationController
   end
 
   def generate_pie_chart_from_data(labels, data_values)
+    # Calculate total for percentage calculation in JavaScript
+    total_hours = data_values.sum
+    
     chart_data = {
       labels: labels,
       datasets: [{
@@ -707,7 +715,9 @@ class TimeAnalyticsController < ApplicationController
             boxWidth: 12
           }
         }
-      }
+      },
+      # Add total hours for percentage calculation in JavaScript
+      total_hours: total_hours
     }
 
     {

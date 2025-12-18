@@ -52,6 +52,42 @@ TimeAnalytics.initCharts = function() {
         };
       }
       
+      // Configure pie charts with percentage in legend
+      if (chartConfig.type === 'pie') {
+        var total = chartConfig.options.total_hours || chartConfig.data.datasets[0].data.reduce(function(sum, val) { return sum + val; }, 0);
+        
+        // Modify labels to include percentage and hours in legend
+        var originalLabels = chartConfig.data.labels.slice();
+        var modifiedLabels = [];
+        
+        for (var i = 0; i < originalLabels.length; i++) {
+          var value = chartConfig.data.datasets[0].data[i];
+          var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+          var hours = value.toFixed(1);
+          
+          // Format: "Development (68.9%, 31.1h)"
+          var labelWithInfo = originalLabels[i] + ' (' + percentage + '%, ' + hours + 'h)';
+          modifiedLabels.push(labelWithInfo);
+        }
+        
+        // Update chart labels
+        chartConfig.data.labels = modifiedLabels;
+        
+        // Enhanced tooltip for pie charts
+        chartConfig.options.plugins.tooltip = {
+          callbacks: {
+            label: function(context) {
+              var label = context.label || '';
+              var value = context.parsed;
+              var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+              // Extract original label (before parentheses) for cleaner tooltip
+              var originalLabel = label.split(' (')[0];
+              return originalLabel + ': ' + value.toFixed(1) + 'h (' + percentage + '%)';
+            }
+          }
+        };
+      }
+      
       // Create new chart instance
       var chart = new Chart(element, chartConfig);
       

@@ -372,6 +372,15 @@ function initChart() {
     timeAnalyticsChart = new Chart(chartElement, config);
     console.log('Chart created successfully');
     
+    // Enhance legend for pie charts
+    if (config.type === 'pie') {
+      setTimeout(function() {
+        if (typeof TimeAnalytics !== 'undefined' && TimeAnalytics.enhancePieLegend) {
+          TimeAnalytics.enhancePieLegend(chartElement);
+        }
+      }, 200);
+    }
+    
   } catch (error) {
     console.error('Error creating chart:', error);
     chartElement.parentElement.innerHTML = '<p style="text-align: center; color: #red; padding: 20px;">Error loading chart: ' + error.message + '</p>';
@@ -380,14 +389,6 @@ function initChart() {
 
 function updateChart() {
   var chartTypeDropdown = document.getElementById('chart_type_select');
-  console.log('Dropdown element:', chartTypeDropdown);
-  console.log('Available options:');
-  if (chartTypeDropdown) {
-    for (var i = 0; i < chartTypeDropdown.options.length; i++) {
-      console.log('- Option:', chartTypeDropdown.options[i].value, chartTypeDropdown.options[i].text);
-    }
-  }
-  console.log('Selected value:', chartTypeDropdown ? chartTypeDropdown.value : 'NOT FOUND');
   
   if (!chartTypeDropdown) {
     console.error('Chart type dropdown not found!');
@@ -435,11 +436,40 @@ function transformChartType(originalConfig, newType) {
   // Create a new config based on the original data but with different chart type
   var newConfig = JSON.parse(JSON.stringify(originalConfig)); // Deep copy
   
+  console.log('Transforming chart to type:', newType);
+  console.log('Original labels:', newConfig.data.labels);
+  
   // Change the chart type
   newConfig.type = newType;
   
   // Adjust configuration based on chart type
   if (newType === 'pie') {
+    // Calculate total for percentage calculation
+    var total = newConfig.data.datasets[0].data.reduce(function(sum, val) { return sum + val; }, 0);
+    
+    // Modify labels to include percentage and hours (key fix!)
+    var originalLabels = newConfig.data.labels.slice();
+    var modifiedLabels = [];
+    
+    // Check if labels are already modified (contain parentheses)
+    var needsModification = !originalLabels[0] || originalLabels[0].indexOf('(') === -1;
+    
+    if (needsModification) {
+      for (var i = 0; i < originalLabels.length; i++) {
+        var value = newConfig.data.datasets[0].data[i];
+        var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        var hours = value.toFixed(1);
+        
+        // Format: "Development (68.9%, 31.1h)"
+        var labelWithInfo = originalLabels[i] + ' (' + percentage + '%, ' + hours + 'h)';
+        modifiedLabels.push(labelWithInfo);
+      }
+      
+      // Update chart labels
+      newConfig.data.labels = modifiedLabels;
+      console.log('Modified labels for pie chart:', modifiedLabels);
+    }
+    
     // Pie chart specific configuration
     newConfig.options = {
       responsive: true,
@@ -451,8 +481,21 @@ function transformChartType(originalConfig, newType) {
             padding: 15,
             boxWidth: 12
           }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              var label = context.label || '';
+              var value = context.parsed;
+              var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+              // Extract original label (before parentheses) for cleaner tooltip
+              var originalLabel = label.split(' (')[0];
+              return originalLabel + ': ' + value.toFixed(1) + 'h (' + percentage + '%)';
+            }
+          }
         }
-      }
+      },
+      total_hours: total
     };
     
     // For pie charts, we need different colors for each slice
@@ -469,6 +512,24 @@ function transformChartType(originalConfig, newType) {
     }
     
   } else if (newType === 'line') {
+    // For non-pie charts, restore original labels if they were modified
+    if (newConfig.data && newConfig.data.labels && newConfig.data.labels.length > 0) {
+      var currentLabels = newConfig.data.labels.slice();
+      var restoredLabels = [];
+      
+      for (var i = 0; i < currentLabels.length; i++) {
+        var label = currentLabels[i];
+        // If label contains parentheses, extract original part
+        if (label.indexOf(' (') !== -1) {
+          restoredLabels.push(label.split(' (')[0]);
+        } else {
+          restoredLabels.push(label);
+        }
+      }
+      
+      newConfig.data.labels = restoredLabels;
+    }
+    
     // Line chart specific configuration
     newConfig.options = {
       responsive: true,
@@ -498,6 +559,24 @@ function transformChartType(originalConfig, newType) {
     }
     
   } else {
+    // For non-pie charts, restore original labels if they were modified
+    if (newConfig.data && newConfig.data.labels && newConfig.data.labels.length > 0) {
+      var currentLabels = newConfig.data.labels.slice();
+      var restoredLabels = [];
+      
+      for (var i = 0; i < currentLabels.length; i++) {
+        var label = currentLabels[i];
+        // If label contains parentheses, extract original part
+        if (label.indexOf(' (') !== -1) {
+          restoredLabels.push(label.split(' (')[0]);
+        } else {
+          restoredLabels.push(label);
+        }
+      }
+      
+      newConfig.data.labels = restoredLabels;
+    }
+    
     // Bar chart (default) configuration
     newConfig.options = {
       responsive: true,
