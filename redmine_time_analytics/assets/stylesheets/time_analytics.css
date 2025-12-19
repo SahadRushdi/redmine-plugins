@@ -48,6 +48,30 @@
   border-color: #2e8bc9;
 }
 
+/* === View Toggle Controls === */
+.view-toggle-controls {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 15px;
+}
+
+.view-toggle-controls .button {
+  padding: 6px 12px;
+  border: 1px solid #007cba;
+  background-color: #007cba;
+  color: white;
+  text-decoration: none;
+  border-radius: 3px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.view-toggle-controls .button:hover {
+  background-color: #005a87;
+  border-color: #005a87;
+}
+
 /* === Form Controls === */
 .filter-select,
 .date-input,

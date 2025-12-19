@@ -125,6 +125,13 @@
     <% case @view_mode %>
     <% when 'activity' %>
       Activity Analysis
+      <% if @grouping == 'daily' %>
+        <div class="view-toggle-controls">
+          <button type="button" id="toggle-activity-view-btn" class="button button-small" onclick="toggleActivityView()">
+            <span id="view-toggle-text">Show Summary View</span>
+          </button>
+        </div>
+      <% end %>
     <% when 'grouping' %>
       <%= l("label_#{@grouping}") %> Analysis
     <% else %>
@@ -148,7 +155,7 @@
   </h3>
 
   <% # Check for data based on view mode and grouping %>
-  <% has_data = if @view_mode == 'activity' && ['weekly', 'monthly', 'yearly'].include?(@grouping)
+  <% has_data = if @view_mode == 'activity'
        @paginated_periods&.any?
      else
        @paginated_entries&.any?
@@ -201,30 +208,81 @@
             </tfoot>
           </table>
         </div>
-      <% else %>
-        <%# Simple activity analysis table for daily grouping %>
-        <table class="list time-entries-grouped-table">
-          <thead>
-            <tr>
-              <th>Activity</th>
-              <th class="hours-column">Total Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @paginated_entries.each do |entry| %>
+      <% elsif @grouping == 'daily' %>
+        <%# Daily Activity Analysis - Dual View System %>
+        
+        <%# Detailed View: Daily Pivot Table (Date × Activity matrix) - Default %>
+        <div id="daily-detailed-view" class="pivot-table-wrapper">
+          <table class="list pivot-table">
+            <thead>
               <tr>
-                <td><%= entry.period %></td>
-                <td class="hours-column"><%= format_hours(entry.hours) %></td>
+                <th class="period-header">Date</th>
+                <% @activities.each do |activity| %>
+                  <th class="activity-header"><%= activity %></th>
+                <% end %>
+                <th class="total-header">Daily Total</th>
               </tr>
-            <% end %>
-          </tbody>
-          <tfoot>
-            <tr class="total-row">
-              <td><strong><%= l(:label_total) %></strong></td>
-              <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              <% @paginated_periods.each_with_index do |period_display, index| %>
+                <% period_key = @activity_pivot_data[:raw_periods][(@offset + index)] %>
+                <tr>
+                  <td class="period-cell"><%= period_display %></td>
+                  <% @activities.each do |activity| %>
+                    <td class="hours-cell">
+                      <% hours = @matrix_data[period_key][activity] || 0 %>
+                      <%= hours > 0 ? format_hours(hours) : '-' %>
+                    </td>
+                  <% end %>
+                  <td class="total-cell">
+                    <%= format_hours(@period_totals[period_key] || 0) %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="period-cell"><strong>Activity Total</strong></td>
+                <% @activities.each do |activity| %>
+                  <td class="total-cell">
+                    <strong><%= format_hours(@activity_totals[activity] || 0) %></strong>
+                  </td>
+                <% end %>
+                <td class="grand-total-cell">
+                  <strong><%= format_hours(@grand_total || 0) %></strong>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        
+        <%# Summary View: Simple Activity Table (Hidden by default) %>
+        <div id="daily-summary-view" style="display: none;">
+          <table class="list time-entries-grouped-table">
+            <thead>
+              <tr>
+                <th>Activity</th>
+                <th class="hours-column">Total Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if defined?(@paginated_entries) && @paginated_entries %>
+                <% @paginated_entries.each do |entry| %>
+                  <tr>
+                    <td><%= entry.period %></td>
+                    <td class="hours-column"><%= format_hours(entry.hours) %></td>
+                  </tr>
+                <% end %>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td><strong><%= l(:label_total) %></strong></td>
+                <td class="hours-column"><strong><%= format_hours(@total_hours) %></strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       <% end %>
     <% elsif @view_mode == 'grouping' || ['weekly', 'monthly', 'yearly'].include?(@grouping) %>
       <%# Grouped table for weekly, monthly, yearly %>
@@ -610,6 +668,54 @@ function transformChartType(originalConfig, newType) {
   return newConfig;
 }
 
+// Toggle between detailed and summary views for daily activity analysis
+function toggleActivityView() {
+  var detailedView = document.getElementById('daily-detailed-view');
+  var summaryView = document.getElementById('daily-summary-view');
+  var toggleText = document.getElementById('view-toggle-text');
+  
+  if (!detailedView || !summaryView || !toggleText) {
+    return;
+  }
+  
+  if (detailedView.style.display === 'none') {
+    // Currently showing summary, switch to detailed
+    detailedView.style.display = 'block';
+    summaryView.style.display = 'none';
+    toggleText.textContent = 'Show Summary View';
+    localStorage.setItem('activity_view_mode', 'detailed');
+  } else {
+    // Currently showing detailed, switch to summary
+    detailedView.style.display = 'none';
+    summaryView.style.display = 'block';
+    toggleText.textContent = 'Show Detailed View';
+    localStorage.setItem('activity_view_mode', 'summary');
+  }
+}
+
+// Restore activity view preference
+function restoreActivityViewState() {
+  var savedMode = localStorage.getItem('activity_view_mode');
+  var detailedView = document.getElementById('daily-detailed-view');
+  var summaryView = document.getElementById('daily-summary-view');
+  var toggleText = document.getElementById('view-toggle-text');
+  
+  if (!detailedView || !summaryView || !toggleText) {
+    return;
+  }
+  
+  if (savedMode === 'summary') {
+    detailedView.style.display = 'none';
+    summaryView.style.display = 'block';
+    toggleText.textContent = 'Show Detailed View';
+  } else {
+    // Default to detailed view
+    detailedView.style.display = 'block';
+    summaryView.style.display = 'none';
+    toggleText.textContent = 'Show Summary View';
+  }
+}
+
 // Preserve form state in localStorage
 function preserveFormState() {
   var groupingSelect = document.getElementById('grouping');
@@ -632,6 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing chart...');
   toggleCustomDateRange();
   restoreFormState();
+  restoreActivityViewState();
   
   // Add event listeners to preserve state
   var groupingSelect = document.getElementById('grouping');

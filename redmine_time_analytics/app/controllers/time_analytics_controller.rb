@@ -43,27 +43,24 @@ class TimeAnalyticsController < ApplicationController
     @offset = params[:page].present? ? (params[:page].to_i - 1) * @limit : 0
 
     if @view_mode == 'activity'
-      if ['weekly', 'monthly', 'yearly'].include?(@grouping)
-        # Generate Activity × Time Period pivot table
-        @activity_pivot_data = generate_activity_pivot_table(@time_entries, @grouping)
-        @time_periods = @activity_pivot_data[:periods]
-        @activities = @activity_pivot_data[:activities]
-        @matrix_data = @activity_pivot_data[:matrix]
-        @period_totals = @activity_pivot_data[:period_totals]
-        @activity_totals = @activity_pivot_data[:activity_totals]
-        @grand_total = @activity_pivot_data[:grand_total]
-        
-        # For pagination, use periods count
-        @entry_count = @time_periods.count
-        @paginated_periods = @time_periods.slice(@offset, @limit)
-      else
-        # Daily grouping - show simple activity totals
+      # Generate Activity × Time Period pivot table for ALL groupings (including daily)
+      @activity_pivot_data = generate_activity_pivot_table(@time_entries, @grouping)
+      @time_periods = @activity_pivot_data[:periods]
+      @activities = @activity_pivot_data[:activities]
+      @matrix_data = @activity_pivot_data[:matrix]
+      @period_totals = @activity_pivot_data[:period_totals]
+      @activity_totals = @activity_pivot_data[:activity_totals]
+      @grand_total = @activity_pivot_data[:grand_total]
+      
+      # For pagination, use periods count
+      @entry_count = @time_periods.count
+      @paginated_periods = @time_periods.slice(@offset, @limit)
+      
+      # Also generate simple activity summary for daily toggle view
+      if @grouping == 'daily'
         grouped_data = group_time_entries(@time_entries, 'activity')
-        @entry_count = grouped_data.count
-
         # Sort by activity name
         sorted_data = grouped_data.sort_by { |activity_name, _| activity_name || 'No Activity' }
-
         @paginated_entries = sorted_data.slice(@offset, @limit).map do |activity_name, hours|
           Struct.new(:period, :hours).new(activity_name || 'No Activity', hours)
         end
@@ -92,7 +89,7 @@ class TimeAnalyticsController < ApplicationController
     chart_type = params[:chart_type] || 'bar'
     Rails.logger.info "Generating chart with type: #{chart_type}, view_mode: #{@view_mode}, grouping: #{@grouping}"
     
-    if @view_mode == 'activity' && ['weekly', 'monthly', 'yearly'].include?(@grouping) && defined?(@activity_pivot_data)
+    if @view_mode == 'activity' && defined?(@activity_pivot_data)
       @chart_data = generate_activity_pivot_chart_data(@activity_pivot_data, chart_type)
     else
       @chart_data = generate_chart_data(@time_entries, @grouping, chart_type, @view_mode)
