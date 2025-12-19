@@ -89,7 +89,7 @@ class TimeAnalyticsController < ApplicationController
     chart_type = params[:chart_type] || 'bar'
     Rails.logger.info "Generating chart with type: #{chart_type}, view_mode: #{@view_mode}, grouping: #{@grouping}"
     
-    if @view_mode == 'activity' && defined?(@activity_pivot_data)
+    if @view_mode == 'activity' && ['weekly', 'monthly', 'yearly'].include?(@grouping) && defined?(@activity_pivot_data)
       @chart_data = generate_activity_pivot_chart_data(@activity_pivot_data, chart_type)
     else
       @chart_data = generate_chart_data(@time_entries, @grouping, chart_type, @view_mode)
