@@ -18,11 +18,11 @@
   <div class="box toggle-view-section">
     <h3>Toggle View:</h3>
     <div class="toggle-buttons">
-      <%= link_to 'Time Entries', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'time_entries', grouping: @grouping)), 
+      <%= link_to 'Time Entries', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page).merge(view_mode: 'time_entries')), 
           class: "button #{'button-active' if @view_mode == 'time_entries'}" %>
-      <%= link_to 'Activity', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page).merge(view_mode: 'activity')), 
+      <%= link_to 'Activity', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page).merge(view_mode: 'activity')), 
           class: "button #{'button-active' if @view_mode == 'activity'}" %>
-      <%= link_to 'Grouping', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :search, :chart_type, :per_page, :page, :grouping).merge(view_mode: 'grouping')), 
+      <%= link_to 'Grouping', time_analytics_individual_dashboard_path(params.permit(:filter, :from, :to, :grouping, :search, :chart_type, :per_page, :page).merge(view_mode: 'grouping')), 
           class: "button #{'button-active' if @view_mode == 'grouping'}" %>
     </div>
   </div>
@@ -610,10 +610,34 @@ function transformChartType(originalConfig, newType) {
   return newConfig;
 }
 
+// Preserve form state in localStorage
+function preserveFormState() {
+  var groupingSelect = document.getElementById('grouping');
+  if (groupingSelect) {
+    localStorage.setItem('time_analytics_grouping', groupingSelect.value);
+  }
+}
+
+// Restore form state from localStorage
+function restoreFormState() {
+  var storedGrouping = localStorage.getItem('time_analytics_grouping');
+  var groupingSelect = document.getElementById('grouping');
+  if (storedGrouping && groupingSelect) {
+    groupingSelect.value = storedGrouping;
+  }
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing chart...');
   toggleCustomDateRange();
+  restoreFormState();
+  
+  // Add event listeners to preserve state
+  var groupingSelect = document.getElementById('grouping');
+  if (groupingSelect) {
+    groupingSelect.addEventListener('change', preserveFormState);
+  }
   
   // Initialize chart after a small delay to ensure DOM is fully rendered
   setTimeout(function() {

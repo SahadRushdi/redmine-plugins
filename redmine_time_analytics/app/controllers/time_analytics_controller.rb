@@ -189,8 +189,17 @@ class TimeAnalyticsController < ApplicationController
   end
 
   def set_grouping
-    @grouping = params[:grouping].presence || 'daily'
+    # Store grouping in session for persistence
+    if params[:grouping].present?
+      session[:time_analytics_grouping] = params[:grouping]
+    end
+    
+    # Use session grouping if no parameter provided
+    @grouping = params[:grouping].presence || session[:time_analytics_grouping] || 'daily'
     @grouping = 'daily' unless %w[daily weekly monthly yearly].include?(@grouping)
+    
+    # Update session with valid grouping
+    session[:time_analytics_grouping] = @grouping
   end
 
   def calculate_avg_hours_per_day
